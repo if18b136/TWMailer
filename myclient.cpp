@@ -8,19 +8,22 @@
 #include <stdio.h>
 #include <string.h>
 #define BUF 1024
+#define LEN 5
 #define PORT 6543
 
-#include  <iostream>
+#include <iostream>
 #include <cstdlib>
-#include <cstring>
+#include <string>
 using namespace std;
 
 int main (int argc, char **argv) {
   int create_socket;
-  char buffer[BUF];
+  char buffer[BUF], input[BUF];
+  string sender;
   struct sockaddr_in address;
   int size;
   uint32_t port_short;
+  bool overload = false;
 
   if( argc < 3 ){
     cout << "Usage: " << argv[0] << " ServerAdresse Port" << endl;
@@ -58,8 +61,33 @@ int main (int argc, char **argv) {
 
   do {
      printf ("Send message: ");
-     fgets (buffer, BUF, stdin);
-     send(create_socket, buffer, strlen (buffer), 0);
+
+     while(strcmp (input, ".\n") != 0 && strcmp (input, "quit\n") != 0){
+       fgets (input, BUF, stdin);
+       if(strcmp (input, "SEND\n") == 0){
+         strncpy(buffer,input,BUF);
+         do{
+           if(overload){
+             cout << "input exceeds char limit. (max. 8 characters)" << endl;
+           }
+           fgets (input, BUF, stdin);
+           overload = true;
+           cout << buffer << input << endl;
+         }
+         while(input[8] != '\n' && input[8] != '\0');
+         strcpy(buffer,input);
+         cout << buffer << endl;
+       }
+       else if(strcmp (input, "DEL\n") == 0){}
+       else if(strcmp (input, "READ\n") == 0){}
+       else if(strcmp (input, "LIST\n") == 0){}
+       else{// error und nix sonst
+       }
+     }
+     send(create_socket, input, strlen (input), 0); // send muss noch weg wegen else oben
+
+     //send(create_socket, input, strlen (buffer), 0);
+     //fgets (buffer, BUF, stdin);
   }
   while (strcmp (buffer, "quit\n") != 0);
   close (create_socket);
