@@ -196,14 +196,20 @@ int main (int argc, char **argv) {
           cout << buffer << endl;
        }
      }
+     else if(strcmp (input, "quit\n") == 0){
+       strncpy(buffer,input,BUF);
+       break;
+     }
      else{
        cout << "Unknown command, please repeat." << endl;
      }
-     cout << " erstens" << endl;
    }
-   cout << " zweitens " << endl;
   }
   while (strcmp (buffer, "quit\n") != 0);
   close (create_socket);
   return EXIT_SUCCESS;
 }
+// dyn buffer
+// fehlerbedingungen bei funktionsabbruch
+// fgets kann auch nichts einlesen - fehlermeldung
+// return codes anschauen

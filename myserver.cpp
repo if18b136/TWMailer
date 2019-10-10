@@ -12,6 +12,7 @@
 #define PORT 6543
 
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <cstring>
 using namespace std;
@@ -25,7 +26,7 @@ int main (int argc, char **argv) {
 
   int create_socket, new_socket;
   socklen_t addrlen;
-  char buffer[BUF];
+  char buffer[BUF], switch_char;
   int size;
   struct sockaddr_in address, cliaddress;
   uint32_t port_short;
@@ -42,8 +43,6 @@ int main (int argc, char **argv) {
   address.sin_family = AF_INET;
   address.sin_addr.s_addr = INADDR_ANY;
   address.sin_port = htons (port_short);
-
-  cout << address.sin_port;
 
   if (bind ( create_socket, (struct sockaddr *) &address, sizeof (address)) != 0) { // descriptor und bind adresse designiert, wo ich den socket gerne haben moechte, man erhaelt einen offenen socket
      perror("bind error");
@@ -69,9 +68,32 @@ int main (int argc, char **argv) {
         if( size > 0)
         {
            buffer[size] = '\0';
+           string str = buffer;
+           char* tokenized;
+           tokenized = strtok (buffer,"\n");
+           cout << tokenized << endl;
            printf ("Message received: %s\n", buffer);
+           switch_char = buffer[0];
+           switch(switch_char){
+           case 'S':
+            cout << "S  Hier koennte ihre Werbung stehen." << endl;
+            
+            break;
+           case 'D':
+            cout << "D  Hier koennte ihre Werbung stehen." << endl;
+            break;
+           case 'L':
+            cout << "L  Hier koennte ihre Werbung stehen." << endl;
+            break;
+           case 'R':
+            cout << "R  Hier koennte ihre Werbung stehen." << endl;
+            break;
+           default:
+              cout << "kommando nicht gefunden!" << endl;
+            break;
+           }
         }
-        else if (size == 0)
+        else if (size == 0) // fehlermeldungen checken
         {
            printf("Client closed remote socket\n");
            break;
