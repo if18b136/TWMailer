@@ -61,7 +61,7 @@ int main (int argc, char **argv) {
      if (new_socket > 0) // client verbunden
      {
         printf ("Client connected from %s:%d...\n", inet_ntoa (cliaddress.sin_addr),ntohs(cliaddress.sin_port));
-        strcpy(buffer,"Welcome to myserver, Please enter your command:\n");	// welcome message
+        strcpy(buffer,"Welcome to myserver!\n");	// welcome message
         send(new_socket, buffer, strlen(buffer),0);
      }
      do {

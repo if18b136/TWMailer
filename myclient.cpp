@@ -60,34 +60,148 @@ int main (int argc, char **argv) {
   }
 
   do {
-     printf ("Send message: ");
-
-     while(strcmp (input, ".\n") != 0 && strcmp (input, "quit\n") != 0){
+     while(strcmp (input, "quit\n") != 0){
+       cout << "Enter your command: "<< endl;
        fgets (input, BUF, stdin);
        if(strcmp (input, "SEND\n") == 0){
          strncpy(buffer,input,BUF);
+
+         // Sender input
          do{
            if(overload){
              cout << "input exceeds char limit. (max. 8 characters)" << endl;
            }
            fgets (input, BUF, stdin);
            overload = true;
-           cout << buffer << input << endl;
          }
          while(input[8] != '\n' && input[8] != '\0');
-         strcpy(buffer,input);
-         cout << buffer << endl;
+         strcat(buffer,input);
+
+         // receiver input
+         overload = false; // reusing bool for next input exceeding
+         do{
+           if(overload){
+             cout << "input exceeds char limit. (max. 8 characters)" << endl;
+           }
+           fgets (input, BUF, stdin);
+           overload = true;
+         }
+         while(input[8] != '\n' && input[8] != '\0');
+         strcat(buffer,input);
+
+         // subject input
+         overload = false; // reusing bool for next input exceeding
+         do{
+           if(overload){
+             cout << "input exceeds char limit. (max. 80 characters)" << endl;
+           }
+           char *begin = &input[0];
+           char *end = begin + sizeof(input);
+           fill(begin,end,0);
+           fgets (input, BUF, stdin);
+           overload = true;
+           //cout << " Betreff " << input << "stelle 80 " << input[80]<< endl;
+         }
+         while(input[80] != '\n' && input[80] != '\0');
+
+         strcat(buffer,input);
+
+         while(strcmp (input, ".\n") != 0){
+           //cout << "input message" << input << endl;
+           fgets (input, BUF, stdin);
+           strcat(buffer,input);
+         }
+         //cout << "went out of loop" << input << endl;
+         send(create_socket, buffer, strlen (buffer), 0);
+     }
+
+     else if(strcmp (input, "LIST\n") == 0){
+       strncpy(buffer,input,BUF);
+       // username input
+       overload = false; // reusing bool for next input exceeding
+       do{
+         if(overload){
+           cout << "input exceeds char limit. (max. 8 characters)" << endl;
+         }
+         char *begin = &input[0];
+         char *end = begin + sizeof(input);
+         fill(begin,end,0);
+         fgets (input, BUF, stdin);
+         overload = true;
        }
-       else if(strcmp (input, "DEL\n") == 0){}
-       else if(strcmp (input, "READ\n") == 0){}
-       else if(strcmp (input, "LIST\n") == 0){}
-       else{// error und nix sonst
+       while(input[8] != '\n' && input[8] != '\0');
+       strcat(buffer,input);
+       send(create_socket, buffer, strlen (buffer), 0); // send user request
+
+       size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
+       if (size>0)
+       {
+          buffer[size]= '\0';
+          cout << buffer << endl;
        }
      }
-     send(create_socket, input, strlen (input), 0); // send muss noch weg wegen else oben
+     else if(strcmp (input, "READ\n") == 0){
+       strncpy(buffer,input,BUF);
+       // username input
+       overload = false; // reusing bool for next input exceeding
+       do{
+         if(overload){
+           cout << "input exceeds char limit. (max. 8 characters)" << endl;
+         }
+         char *begin = &input[0];
+         char *end = begin + sizeof(input);
+         fill(begin,end,0);
+         fgets (input, BUF, stdin);
+         overload = true;
+       }
+       while(input[8] != '\n' && input[8] != '\0');
+       strcat(buffer,input);
+       fgets (input, BUF, stdin);
+       strcat(buffer,input);
+       cout << buffer << endl;
+       send(create_socket, buffer, strlen (buffer), 0); // send user request
 
-     //send(create_socket, input, strlen (buffer), 0);
-     //fgets (buffer, BUF, stdin);
+       size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
+       if (size>0)
+       {
+          buffer[size]= '\0';
+          cout << buffer << endl;
+       }
+     }
+     else if(strcmp (input, "DEL\n") == 0){
+       strncpy(buffer,input,BUF);
+       // username input
+       overload = false; // reusing bool for next input exceeding
+       do{
+         if(overload){
+           cout << "input exceeds char limit. (max. 8 characters)" << endl;
+         }
+         char *begin = &input[0];
+         char *end = begin + sizeof(input);
+         fill(begin,end,0);
+         fgets (input, BUF, stdin);
+         overload = true;
+       }
+       while(input[8] != '\n' && input[8] != '\0');
+       strcat(buffer,input);
+       fgets (input, BUF, stdin);
+       strcat(buffer,input);
+       cout << buffer << endl;
+       send(create_socket, buffer, strlen (buffer), 0); // send user request
+
+       size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
+       if (size>0)
+       {
+          buffer[size]= '\0';
+          cout << buffer << endl;
+       }
+     }
+     else{
+       cout << "Unknown command, please repeat." << endl;
+     }
+     cout << " erstens" << endl;
+   }
+   cout << " zweitens " << endl;
   }
   while (strcmp (buffer, "quit\n") != 0);
   close (create_socket);
