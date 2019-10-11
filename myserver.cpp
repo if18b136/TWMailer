@@ -8,14 +8,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#define BUF 1024
-#define PORT 6543
-
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+#define BUF 1024
+#define PORT 6543
+
+
 using namespace std;
 
 int main (int argc, char **argv) {
@@ -34,26 +36,27 @@ int main (int argc, char **argv) {
 
   port_short = atoi(argv[1]); //port has to be 4 numbers long
 
-  create_socket = socket (AF_INET, SOCK_STREAM, 0); //get socket file descriptor
-  if (create_socket < 0) {  //check if socket was created succesfully
-    perror("ERROR opening socket");
-    return EXIT_FAILURE;
-  }
-
-  memset(&address,0,sizeof(address));
-  address.sin_family = AF_INET;
-  address.sin_addr.s_addr = INADDR_ANY;
-  address.sin_port = htons (port_short);
-
-  if (bind ( create_socket, (struct sockaddr *) &address, sizeof (address)) != 0) { // descriptor und bind adresse designiert, wo ich den socket gerne haben moechte, man erhaelt einen offenen socket
-     perror("bind error");
-     return EXIT_FAILURE;
-  }
-  listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler - noch nicht ganz sauber ausprogrammiert
-
-  addrlen = sizeof (struct sockaddr_in);
+  
 
   while (1) {
+    create_socket = socket (AF_INET, SOCK_STREAM, 0); //get socket file descriptor
+    if (create_socket < 0) {  //check if socket was created succesfully
+      perror("ERROR opening socket");
+      return EXIT_FAILURE;
+    }
+
+    memset(&address,0,sizeof(address));
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons (port_short);
+
+    if (bind ( create_socket, (struct sockaddr *) &address, sizeof (address)) != 0) { // descriptor und bind adresse designiert, wo ich den socket gerne haben moechte, man erhaelt einen offenen socket
+       perror("bind error");
+       return EXIT_FAILURE;
+    }
+    listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler - noch nicht ganz sauber ausprogrammiert
+
+    addrlen = sizeof (struct sockaddr_in);
      printf("Waiting for connections...\n");
      new_socket = accept ( create_socket, (struct sockaddr *) &cliaddress, &addrlen ); // blockiert und wartet bis client antwortet.
      // befehl zum Verbindungscheck: netstat anp | grep myserver
@@ -63,6 +66,7 @@ int main (int argc, char **argv) {
         printf ("Client connected from %s:%d...\n", inet_ntoa (cliaddress.sin_addr),ntohs(cliaddress.sin_port));
         strcpy(buffer,"Welcome to myserver!\n");	// welcome message
         send(new_socket, buffer, strlen(buffer),0);
+        close (create_socket);
      }
      do {
         size = recv (new_socket, buffer, BUF-1, 0);
@@ -73,30 +77,31 @@ int main (int argc, char **argv) {
            char *tokenized, *username;
            tokenized = strtok (buffer,"\n");
            cout << tokenized << endl;
+           username = strtok (NULL,"\n");
 
 
            if(tokenized[0] == 'S'){
 
-             username = strtok (NULL,"\n");
+             
              cout << "Message received from: " << username << endl;
              ofstream outfile;
 
              outfile.open(username,ios_base::app);
 
-             ifstream input(username);
+             ifstream file(username);
               string line;
               int linecount = 0;
-              getline(input, line);
+              getline(file, line);
               cout << line << endl;
-              /*if(line != "1"){
+              if(line != "1"){
                   outfile << "1" << endl;
                   cout << "new file created" << endl;
-              }*/
-              while(getline(input, line)){
+              }
+              while(getline(file, line)){
                   /*if(line == "."){
 
                   }
-                  else */if(input.eof()){
+                  else */if(file.eof()){
                     cout << "end of file" << endl;
                     break;
                   }
@@ -113,6 +118,62 @@ int main (int argc, char **argv) {
            }
            else if(tokenized[0] == 'L'){
 
+            ofstream outfile;
+            ifstream file(username);
+            string line;
+
+            cout << "looking for messages from: " << username << endl;
+            outfile.open(username,ios_base::app);
+            getline(file, line);
+            if(line != "1"){
+              char *begin = &buffer[0];
+              char *end = begin + sizeof(buffer);
+              fill(begin,end,0);      
+              char return_zero[BUF];
+              char *string_to_charp[BUF];
+              strncpy (return_zero,"0\n", BUF);
+              send(new_socket, return_zero, strlen(buffer),0);
+               
+            }
+            else{
+              int msg_count = 0, line_tracker = 0;
+              string return_subj;
+              string first_subj;
+              string all_subj;
+              while(getline(file, line)){
+                if(line_tracker == 2){
+                  all_subj.append(line);
+                  all_subj.append("\n");
+                }
+                if(line == "."){
+                  line_tracker = 1;
+                  msg_count++;
+                  do{
+                    getline(file, line);
+
+                    line_tracker++;
+                  }
+                  while(line_tracker <= 3);
+                  if(file.eof()){
+                    break;
+                    }
+                  else{
+                    all_subj.append(line);
+                    all_subj.append("\n");
+                  
+                  }
+                }
+                line_tracker++;
+              }
+              stringstream dumbuffer(stringstream::out);
+              dumbuffer << msg_count;
+              dumbuffer.str();
+              strcpy(buffer, dumbuffer.str().c_str());
+              strcat(buffer, "\n");
+              strcat(buffer, all_subj.c_str());
+              send(new_socket, buffer, strlen(buffer),0);
+            }
+            
            }
            else if (tokenized[0] == 'R'){
 
