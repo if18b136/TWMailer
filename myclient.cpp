@@ -61,6 +61,7 @@ int main (int argc, char **argv) {
 
   do {
      while(strcmp (input, "quit\n") != 0){
+       overload = false;
        cout << "Enter your command: "<< endl;
        fgets (input, BUF, stdin);
        if(strcmp (input, "SEND\n") == 0){ //two times in a row exceeds char limit - clean input after successful send
@@ -113,6 +114,10 @@ int main (int argc, char **argv) {
          }
          //cout << "went out of loop" << input << endl;
          send(create_socket, buffer, strlen (buffer), 0);
+         char *begin = &buffer[0];
+         char *end = begin + sizeof(buffer);
+         fill(begin,end,0);
+         overload = false;
      }
 
      else if(strcmp (input, "LIST\n") == 0){
@@ -132,6 +137,11 @@ int main (int argc, char **argv) {
        while(input[8] != '\n' && input[8] != '\0');
        strcat(buffer,input);
        send(create_socket, buffer, strlen (buffer), 0); // send user request
+       overload = false;
+
+       char *begin = &buffer[0];
+       char *end = begin + sizeof(buffer);
+       fill(begin,end,0);
 
        size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
        if (size>0)
@@ -146,7 +156,8 @@ int main (int argc, char **argv) {
        overload = false; // reusing bool for next input exceeding
        do{
          if(overload){
-           cout << "input exceeds char limit. (max. 8 characters)" << endl;
+
+           cout << "input exceeds char limit. (max. 8 characters)READ" << endl;
          }
          char *begin = &input[0];
          char *end = begin + sizeof(input);
@@ -160,6 +171,11 @@ int main (int argc, char **argv) {
        strcat(buffer,input);
        cout << buffer << endl;
        send(create_socket, buffer, strlen (buffer), 0); // send user request
+
+       char *begin = &buffer[0];
+       char *end = begin + sizeof(buffer);
+       fill(begin,end,0);
+       overload = false;
 
        size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
        if (size>0)
@@ -188,6 +204,11 @@ int main (int argc, char **argv) {
        strcat(buffer,input);
        cout << buffer << endl;
        send(create_socket, buffer, strlen (buffer), 0); // send user request
+
+       char *begin = &buffer[0];
+       char *end = begin + sizeof(buffer);
+       fill(begin,end,0);
+       overload = false;
 
        size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
        if (size>0)

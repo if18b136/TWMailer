@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <cstdlib>
 #include <cstring>
 using namespace std;
@@ -73,16 +74,36 @@ int main (int argc, char **argv) {
            tokenized = strtok (buffer,"\n");
            cout << tokenized << endl;
 
-           printf ("Message received: %s\n", buffer);
-
 
            if(tokenized[0] == 'S'){
 
              username = strtok (NULL,"\n");
-
+             cout << "Message received from: " << username << endl;
              ofstream outfile;
 
              outfile.open(username,ios_base::app);
+
+             ifstream input(username);
+              string line;
+              int linecount = 0;
+              getline(input, line);
+              cout << line << endl;
+              /*if(line != "1"){
+                  outfile << "1" << endl;
+                  cout << "new file created" << endl;
+              }*/
+              while(getline(input, line)){
+                  /*if(line == "."){
+
+                  }
+                  else */if(input.eof()){
+                    cout << "end of file" << endl;
+                    break;
+                  }
+                  else{
+                    continue;
+                  }
+              }
 
              while(tokenized != NULL){
                outfile << tokenized << endl;
