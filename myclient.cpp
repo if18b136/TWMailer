@@ -214,7 +214,6 @@ int main (int argc, char **argv) {
        if (size>0)
        {
           buffer[size]= '\0';
-          cout << buffer << endl;
        }
      }
      else if(strcmp (input, "quit\n") == 0){
