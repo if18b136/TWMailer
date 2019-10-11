@@ -211,7 +211,9 @@ int main (int argc, char **argv) {
 
                 }
                 else if(file.eof()){
-                  cout << "EOF.. breaking"<< endl;
+                  cout << "EOF.. nothing found"<< endl;
+                  strcpy(buffer, "ERR");
+                  send(new_socket, buffer, strlen(buffer),0);
                   outfile.close();
                   break;
                 }
@@ -220,6 +222,8 @@ int main (int argc, char **argv) {
                   char *begin = &buffer[0];
                   char *end = begin + sizeof(buffer);
                   fill(begin,end,0);
+                  string ok = "OK\n";
+                  strcat(buffer, ok.c_str());
                   while(getline(file, line)){
                     if(line != "."){
                        line.append("\n");
@@ -235,12 +239,85 @@ int main (int argc, char **argv) {
                 }
               }
             }
-
-
            }
            else if (tokenized[0] == 'D'){
 
-           }
+
+            
+            /*ofstream outfile;
+            ifstream file(username);
+            int message_count = 1;
+            string line;
+            string message_nr_str = strtok (NULL,"\n");
+            int message_nr = stoi(message_nr_str ,nullptr);
+            cout << "message Nr" << message_nr << endl;
+
+            outfile.open(username, ios_base::app);
+            cout << "File openeded" << endl;
+            getline(file,line);
+            if(line!="1"){
+              cout << "no 1 here?" << endl;
+              char *begin = &buffer[0];
+              char *end = begin + sizeof(buffer);
+              fill(begin,end,0);
+              strcpy(buffer, "ERR");
+              send(new_socket, buffer, strlen(buffer),0);
+            }
+            else{
+              while(getline(file, line)){
+                cout << "line gotten.." << endl;
+                if(line == "."){
+                  char *begin = &buffer[0];
+                  char *end = begin + sizeof(buffer);
+                  fill(begin,end,0);
+                  cout << "end of first msg found" << endl;
+                  message_count++;
+                  cout << "msg_count: " << message_count <<endl << "message_nr: " << message_nr<< endl;
+                  if(message_count == message_nr){
+                    getline(file, line);
+                    cout << "message found" << endl;
+                  }
+
+                }
+                else if(file.eof()){
+                  cout << "EOF.. nothing found"<< endl;
+                  strcpy(buffer, "ERR");
+                  send(new_socket, buffer, strlen(buffer),0);
+                  outfile.close();
+                  break;
+                }
+                if (line == "SEND" && message_count == message_nr){
+                  cout << "deleting.."<<endl;
+                  char *begin = &buffer[0];
+                  char *end = begin + sizeof(buffer);
+                  fill(begin,end,0);
+
+                  string ok = "OK\n";
+                  strcat(buffer, ok.c_str());
+                  send(new_socket, buffer, strlen(buffer),0);
+                  outfile.close();
+                  message_count = 0;
+
+                  outfile.close();
+                  break;
+                  
+
+                  /*while(getline(file, line)){
+                    if(line != "."){
+                       line.append("\n");
+                       strcat(buffer, line.c_str());
+                    }
+                    else{
+                      
+                      outfile.close();
+                      message_count = 0;
+                      break;
+                    }
+                  }
+                }
+              }
+            }
+           }*/
            else{
              //error
            }
