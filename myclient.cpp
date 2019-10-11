@@ -63,7 +63,7 @@ int main (int argc, char **argv) {
      while(strcmp (input, "quit\n") != 0){
        cout << "Enter your command: "<< endl;
        fgets (input, BUF, stdin);
-       if(strcmp (input, "SEND\n") == 0){
+       if(strcmp (input, "SEND\n") == 0){ //two times in a row exceeds char limit - clean input after successful send
          strncpy(buffer,input,BUF);
 
          // Sender input

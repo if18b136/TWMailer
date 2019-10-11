@@ -26,8 +26,8 @@ int main (int argc, char **argv) {
 
   int create_socket, new_socket;
   socklen_t addrlen;
-  char buffer[BUF], switch_char;
-  int size;
+  char buffer[BUF];
+  int size, num;
   struct sockaddr_in address, cliaddress;
   uint32_t port_short;
 
@@ -69,28 +69,38 @@ int main (int argc, char **argv) {
         {
            buffer[size] = '\0';
            string str = buffer;
-           char* tokenized;
+           char *tokenized, *username;
            tokenized = strtok (buffer,"\n");
            cout << tokenized << endl;
+
            printf ("Message received: %s\n", buffer);
-           switch_char = buffer[0];
-           switch(switch_char){
-           case 'S':
-            cout << "S  Hier koennte ihre Werbung stehen." << endl;
-            
-            break;
-           case 'D':
-            cout << "D  Hier koennte ihre Werbung stehen." << endl;
-            break;
-           case 'L':
-            cout << "L  Hier koennte ihre Werbung stehen." << endl;
-            break;
-           case 'R':
-            cout << "R  Hier koennte ihre Werbung stehen." << endl;
-            break;
-           default:
-              cout << "kommando nicht gefunden!" << endl;
-            break;
+
+
+           if(tokenized[0] == 'S'){
+
+             username = strtok (NULL,"\n");
+
+             ofstream outfile;
+
+             outfile.open(username,ios_base::app);
+
+             while(tokenized != NULL){
+               outfile << tokenized << endl;
+               tokenized = strtok(NULL,"\n");
+             }
+             outfile.close();
+           }
+           else if(tokenized[0] == 'L'){
+
+           }
+           else if (tokenized[0] == 'R'){
+
+           }
+           else if (tokenized[0] == 'D'){
+
+           }
+           else{
+             //error
            }
         }
         else if (size == 0) // fehlermeldungen checken
