@@ -17,8 +17,13 @@
 #define BUF 1024
 #define PORT 6543
 
-
 using namespace std;
+
+void clear_buffer(char *buffer){
+  char *begin = &buffer[0];
+  char *end = begin + sizeof(buffer);
+  fill(begin,end,0);
+}
 
 int main (int argc, char **argv) {
 
@@ -35,8 +40,6 @@ int main (int argc, char **argv) {
   uint32_t port_short;
 
   port_short = atoi(argv[1]); //port has to be 4 numbers long
-
-  
 
   while (1) {
     create_socket = socket (AF_INET, SOCK_STREAM, 0); //get socket file descriptor
@@ -59,191 +62,163 @@ int main (int argc, char **argv) {
     addrlen = sizeof (struct sockaddr_in);
      printf("Waiting for connections...\n");
      new_socket = accept ( create_socket, (struct sockaddr *) &cliaddress, &addrlen ); // blockiert und wartet bis client antwortet.
-     // befehl zum Verbindungscheck: netstat anp | grep myserver
-     // telnet "Webserveradresse" "Port"
-     if (new_socket > 0) // client verbunden
-     {
+
+     if (new_socket > 0){  // client verbunden
         printf ("Client connected from %s:%d...\n", inet_ntoa (cliaddress.sin_addr),ntohs(cliaddress.sin_port));
         strcpy(buffer,"Welcome to myserver!\n");	// welcome message
         send(new_socket, buffer, strlen(buffer),0);
+        clear_buffer(buffer);
         close (create_socket);
      }
      do {
         size = recv (new_socket, buffer, BUF-1, 0);
-        if( size > 0)
-        {
+        if( size > 0){
            buffer[size] = '\0';
-           string str = buffer;
-           char *tokenized, *username;
-           tokenized = strtok (buffer,"\n");
-           cout << tokenized << endl;
+           string input_str, num_str, token, username, filename, command, line;  //various strings for input/output handling
+           token = strtok (buffer,"\n");
+           cout << "Command received: "<< token << endl;
            username = strtok (NULL,"\n");
-
-
-           if(tokenized[0] == 'S'){
-
-             
+           filename = username + ".txt";
+           cout << "Token: " << token << endl;
+           // SEND command on server side
+           if(token == "SEND"){
              cout << "Message received from: " << username << endl;
              ofstream outfile;
+             outfile.open(filename,ios_base::app);
+             ifstream file(filename);
 
-             outfile.open(username,ios_base::app);
+             int msg_count = 1;
 
-             ifstream file(username);
-              string line;
-              int linecount = 0;
-              getline(file, line);
-              cout << line << endl;
-              if(line != "1"){
-                  outfile << "1" << endl;
-                  cout << "new file created" << endl;
-              }
-              while(getline(file, line)){
-                  /*if(line == "."){
+             // check if file is emty by looking for a "1" in the first line
+             getline(file, line);
+             if(line != "1"){
+               outfile << "1" << endl;
+               cout << "new file created" << endl;
+             }
+             else{
+               // Count total number of messages in a file
+               while(getline(file, line)){
+                 if(line == "."){
+                   msg_count++; // increase for every message end => "."
+                 }
+               }
+               outfile << msg_count << endl;  //include new message number in file
+             }
 
-                  }
-                  else */if(file.eof()){
-                    cout << "end of file" << endl;
-                    break;
-                  }
-                  else{
-                    continue;
-                  }
-              }
-
-             while(tokenized != NULL){
-               outfile << tokenized << endl;
-               tokenized = strtok(NULL,"\n");
+             while(token != "."){  // tokenize buffer and put into file until end of message
+               token = strtok(NULL,"\n");
+               outfile << token << endl;
              }
              outfile.close();
            }
-           else if(tokenized[0] == 'L'){
-
+           else if(token == "LIST"){
+            bool new_msg = true;  //starts with true so that first subject gets added in while loop
             ofstream outfile;
-            ifstream file(username);
-            string line;
-
+            ifstream file(filename);
             cout << "looking for messages from: " << username << endl;
-            outfile.open(username,ios_base::app);
+            outfile.open(filename,ios_base::app);
+
             getline(file, line);
             if(line != "1"){
-              char *begin = &buffer[0];
-              char *end = begin + sizeof(buffer);
-              fill(begin,end,0);      
-              char return_zero[BUF];
-              strncpy (return_zero,"0\n", BUF);
-              send(new_socket, return_zero, strlen(return_zero),0);
-               
+              clear_buffer(buffer);
+              strncpy (buffer,"0\n", BUF);
+              send(new_socket, buffer, strlen(buffer),0);
+              clear_buffer(buffer);
             }
             else{
-              int msg_count = 0, line_tracker = 0;
-              string return_subj;
-              string first_subj;
-              string all_subj;
-              while(getline(file, line)){
-                if(line_tracker == 2){
-                  all_subj.append(line);
-                  all_subj.append("\n");
-                }
-                if(line == "."){
-                  line_tracker = 1;
-                  msg_count++;
-                  do{
-                    getline(file, line);
+              int msg_count = 1; // starts at one so that first message subject gets added in while loop
+              num_str = line;// first message is done extra
+              num_str.append("\n");
 
-                    line_tracker++;
+              while(getline(file,line)){
+                if(new_msg){
+                  //msg_count = stoi(line);
+
+                  if(msg_count % 2 == 0){ // get number
+                    num_str = line + "\n";
                   }
-                  while(line_tracker <= 3);
-                  if(file.eof()){
-                    break;
-                    }
                   else{
-                    all_subj.append(line);
-                    all_subj.append("\n");
-                  
+                    getline(file,line);
+                    input_str.append(line);
+                    input_str.append("\n");
+                    new_msg = false;  // after adding the subject we go hunting for new messages again
                   }
+                  msg_count++;
                 }
-                line_tracker++;
-              }
-              stringstream dumbuffer(stringstream::out);
-              dumbuffer << msg_count;
-              dumbuffer.str();
-              strcpy(buffer, dumbuffer.str().c_str());
-              strcat(buffer, "\n");
-              strcat(buffer, all_subj.c_str());
-              send(new_socket, buffer, strlen(buffer),0);
-            }
-            
-           }
-           else if (tokenized[0] == 'R'){
-            ofstream outfile;
-            ifstream file(username);
-            int message_count = 1;
-            string line;
-            string message_nr_str = strtok (NULL,"\n");
-            int message_nr = stoi(message_nr_str ,nullptr);
-            cout << "message Nr" << message_nr << endl;
-
-            outfile.open(username, ios_base::app);
-            cout << "File openeded" << endl;
-            getline(file,line);
-            if(line!="1"){
-              cout << "no 1 here?" << endl;
-              char *begin = &buffer[0];
-              char *end = begin + sizeof(buffer);
-              fill(begin,end,0);
-              strcpy(buffer, "ERR");
-              send(new_socket, buffer, strlen(buffer),0);
-            }
-            else{
-              while(getline(file, line)){
-                cout << "line gotten.." << endl;
                 if(line == "."){
-                  char *begin = &buffer[0];
-                  char *end = begin + sizeof(buffer);
-                  fill(begin,end,0);
-                  cout << "end of first msg found" << endl;
-                  message_count++;
-                  cout << "msg_count: " << message_count <<endl << "message_nr: " << message_nr<< endl;
-                  if(message_count == message_nr){
-                    getline(file, line);
-                    cout << "message found" << endl;
-                  }
-
-                }
-                else if(file.eof()){
-                  cout << "EOF.. nothing found"<< endl;
-                  strcpy(buffer, "ERR");
-                  send(new_socket, buffer, strlen(buffer),0);
-                  outfile.close();
-                  break;
-                }
-                if (line == "SEND" && message_count == message_nr){
-                  cout << "parsing.."<<endl;
-                  char *begin = &buffer[0];
-                  char *end = begin + sizeof(buffer);
-                  fill(begin,end,0);
-                  string ok = "OK\n";
-                  strcat(buffer, ok.c_str());
-                  while(getline(file, line)){
-                    if(line != "."){
-                       line.append("\n");
-                       strcat(buffer, line.c_str());
-                    }
-                    else{
-                      send(new_socket, buffer, strlen(buffer),0);
-                      outfile.close();
-                      message_count = 0;
-                      break;
-                    }
-                  } 
+                  new_msg = true; //prepare for adding num and subject in the next iterations;
                 }
               }
-            }
+              num_str.append(input_str);
+              strncpy (buffer,num_str.c_str(), BUF);
+              send(new_socket, buffer, strlen(buffer),0);
+              clear_buffer(buffer);
+              input_str = ""; // clear input string for reuse in READ
+             }
            }
-           else if (tokenized[0] == 'D'){
+           else if (token == "READ"){
+             bool found_msg = false, no_msg = true, recv_subj = true;
+             ofstream outfile;
+             ifstream file(filename);
+             cout << "looking for certain message from: " << username << endl;
+             outfile.open(filename,ios_base::app);
+             string read = strtok(NULL,"\n");
+
+             getline(file, line);
+             if(line != "1"){
+               strncpy (buffer,"ERR\n", BUF);
+               send(new_socket, buffer, strlen(buffer),0);
+               clear_buffer(buffer);
+             }
+             else{
+               do{
+                 if(found_msg){
+                   cout << "found message" << endl;
+                   if(line == "."){
+                     strncpy (buffer,input_str.c_str(), BUF);
+                     send(new_socket, buffer, strlen(buffer),0);
+                     clear_buffer(buffer);
+                     found_msg = false;
+                     no_msg = false;
+                   }
+                   if(recv_subj){ //lazy way to skip receiver and subject once
+                     getline(file,line);
+                     getline(file,line);
+                     recv_subj = false;
+                   }
+                   input_str.append(line);
+                   input_str.append("\n");
+                 }
+                 if(line == read){
+                   found_msg = true;
+                 }
+               }while(getline(file,line));
+               if(no_msg){
+                 strncpy (buffer,"ERR", BUF);
+                 send(new_socket, buffer, strlen(buffer),0);
+                 clear_buffer(buffer);
+               }
+             }
+           }
+           else if (token == "DEL"){
+             ofstream outfile;
+             ifstream file(filename);
+             cout << "looking for certain message to delete from: " << username << endl;
+             outfile.open(filename,ios_base::app);
+             token = strtok(NULL,"\n");
+
+             getline(file, line);
+             if(line != "1"){
+               strncpy (buffer,"ERR\n", BUF);
+               send(new_socket, buffer, strlen(buffer),0);
+               clear_buffer(buffer);
+             }else{
+               string filename_temp = "temp_" + filename;
+               ofstream of_tempfile;
+               ifstream tempfile(filename_temp);
+             }
 
 
-            
             /*ofstream outfile;
             ifstream file(username);
             int message_count = 1;
@@ -300,7 +275,7 @@ int main (int argc, char **argv) {
 
                   outfile.close();
                   break;
-                  
+
 
                   /*while(getline(file, line)){
                     if(line != "."){
@@ -308,7 +283,7 @@ int main (int argc, char **argv) {
                        strcat(buffer, line.c_str());
                     }
                     else{
-                      
+
                       outfile.close();
                       message_count = 0;
                       break;

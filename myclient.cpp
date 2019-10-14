@@ -8,156 +8,211 @@
 #include <stdio.h>
 #include <string.h>
 #define BUF 1024
-#define LEN 5
-#define PORT 6543
 
 #include <iostream>
 #include <cstdlib>
 #include <string>
 using namespace std;
 
-int main (int argc, char **argv) {
-  int create_socket;
-  char buffer[BUF], input[BUF];
-  string sender;
-  struct sockaddr_in address;
-  int size;
-  uint32_t port_short;
-  bool overload = false;
+void clear_buffer(char *buffer){
+  char *begin = &buffer[0];
+  char *end = begin + sizeof(buffer);
+  fill(begin,end,0);
+}
 
+int main (int argc, char **argv) {
+  int create_socket;    // Integer for socket creation and it's error handling
+  char buffer[BUF], input[BUF]; // Character Arrays, buffer is the final datastream that gets send to the server, input is used for input, concatenation and copies
+  struct sockaddr_in address; //socket struct - base connection
+  int size; // Integer for message receiving and it's error handling
+  uint32_t port_short;  // unsigned 32bit integer - socket struct changes this short into hex for port connection
+  bool overload = false;  // boolean for input size overload check
+  string input_str;
+
+  // check for required amount of command line arguments
   if( argc < 3 ){
     cout << "Usage: " << argv[0] << " ServerAdresse Port" << endl;
      exit(EXIT_FAILURE);
   }
 
+  // Exit with error message
   if ((create_socket = socket (AF_INET, SOCK_STREAM, 0)) == -1)
   {
      perror("Socket error");
      return EXIT_FAILURE;
   }
 
+  // After successful socket creation get port number
   port_short = atoi(argv[2]);
 
+  // initialise socket
   memset(&address,0,sizeof(address));
   address.sin_family = AF_INET;
-  address.sin_port = htons (port_short); // byte order - host to network
+  address.sin_port = htons (port_short); // byte order - host to network short
   inet_aton (argv[1], &address.sin_addr);
 
-  if (connect ( create_socket, (struct sockaddr *) &address, sizeof (address)) == 0)
-  {
+  // connection try, success and error messages
+  if (connect ( create_socket, (struct sockaddr *) &address, sizeof (address)) == 0){
      printf ("Connection with server (%s) established\n", inet_ntoa (address.sin_addr));
      size=recv(create_socket,buffer,BUF-1, 0);
-     if (size>0)
-     {
+     if (size>0){
         buffer[size]= '\0';
-        printf("%s",buffer);
+        cout << buffer << endl;
+        clear_buffer(buffer);
      }
   }
-  else
-  {
+  else{
      perror("Connect error - no server available");
      return EXIT_FAILURE;
   }
 
-  do {
-     while(strcmp (input, "quit\n") != 0){
-       overload = false;
+  // input after successful connection
+  do{
+     while(input_str != "quit"){
+       overload = false;  // set overload to false initially for any case of unexpected operation cancelling
        cout << "Enter your command: "<< endl;
-       fgets (input, BUF, stdin);
-       if(strcmp (input, "SEND\n") == 0){ //two times in a row exceeds char limit - clean input after successful send
-         strncpy(buffer,input,BUF);
+       //fgets (str, BUF, stdin);
+       getline(cin, input_str);
+
+       if(input_str == "SEND"){ //two times in a row exceeds char limit - clean input after successful send
+         input_str += "\n"; // add newline
+         strncpy(buffer,input_str.c_str(),BUF);
 
          // Sender input
-         do{
-           if(overload){
-             cout << "input exceeds char limit. (max. 8 characters)" << endl;
+         while(!overload){
+           getline(cin,input_str);
+           if(input_str.length() > 8){
+             cout << "input exceeds char limit. (max. 8 characters)<" << input_str << ">"<<  endl;
            }
-           fgets (input, BUF, stdin);
-           overload = true;
+           else{
+             overload = true; // gets set to true to break out of loop
+             input_str += "\n";
+             strcat(buffer,input_str.c_str());
+           }
          }
-         while(input[8] != '\n' && input[8] != '\0');
-         strcat(buffer,input);
+
+         overload = false; // reset overload for receiver
 
          // receiver input
-         overload = false; // reusing bool for next input exceeding
-         do{
-           if(overload){
-             cout << "input exceeds char limit. (max. 8 characters)" << endl;
+         while(!overload){
+           getline(cin,input_str);
+           if(input_str.length() > 8){
+             cout << "input exceeds char limit. (max. 8 characters) <" << input_str << ">"<<  endl;
            }
-           fgets (input, BUF, stdin);
-           overload = true;
-         }
-         while(input[8] != '\n' && input[8] != '\0');
-         strcat(buffer,input);
-
-         // subject input
-         overload = false; // reusing bool for next input exceeding
-         do{
-           if(overload){
-             cout << "input exceeds char limit. (max. 80 characters)" << endl;
+           else{
+             overload = true; // gets set to true to break out of loop
+             input_str += "\n";
+             strcat(buffer,input_str.c_str());
            }
-           char *begin = &input[0];
-           char *end = begin + sizeof(input);
-           fill(begin,end,0);
-           fgets (input, BUF, stdin);
-           overload = true;
-           //cout << " Betreff " << input << "stelle 80 " << input[80]<< endl;
          }
-         while(input[80] != '\n' && input[80] != '\0');
 
-         strcat(buffer,input);
-
-         while(strcmp (input, ".\n") != 0){
-           //cout << "input message" << input << endl;
-           fgets (input, BUF, stdin);
-           strcat(buffer,input);
-         }
-         //cout << "went out of loop" << input << endl;
-         send(create_socket, buffer, strlen (buffer), 0);
-         char *begin = &buffer[0];
-         char *end = begin + sizeof(buffer);
-         fill(begin,end,0);
          overload = false;
+
+         //subject input
+         while(!overload){
+           getline(cin,input_str);
+           if(input_str.length() > 80){
+             cout << "input exceeds char limit. (max. 80 characters) <" << input_str << ">"<<  endl;
+           }
+           else{
+             overload = true; // gets set to true to break out of loop
+             input_str += "\n";
+             strcat(buffer,input_str.c_str());
+           }
+         }
+
+         overload = false;
+
+         getline(cin,input_str);  //get first line of the text message to prevent ending when someone puts "." as subject
+         // message input
+         while(input_str != "."){
+           input_str += "\n";
+           strcat(buffer,input_str.c_str());
+           getline(cin,input_str);
+         }
+
+         // copy ".\n" into buffer too, then send it to server
+         input_str += "\n";
+         strcat(buffer,input_str.c_str());
+         send(create_socket, buffer, strlen (buffer), 0);
+         clear_buffer(buffer); // clear buffer after sending message
      }
 
-     else if(strcmp (input, "LIST\n") == 0){
+     // LIST command, lists all subjects of a certain user
+     else if(input_str == "LIST"){
+       input_str += "\n";
+       strncpy(buffer,input_str.c_str(),BUF);
+
+       // name input
+       while(!overload){
+         getline(cin,input_str);
+         if(input_str.length() > 8){
+           cout << "input exceeds char limit. (max. 8 characters)<" << input_str << ">"<<  endl;
+         }
+         else{
+           overload = true; // gets set to true to break out of loop
+           input_str += "\n";
+           strcat(buffer,input_str.c_str());
+         }
+       }
+
+       overload = false; // reset overload for next input check
+
+       send(create_socket, buffer, strlen (buffer), 0); // send user request
+       clear_buffer(buffer);
+
+       //wait for answer from server
+       size=recv(create_socket,buffer,BUF-1, 0);
+       if (size>0){
+          buffer[size]= '\0';
+          cout << buffer << endl;
+          clear_buffer(buffer);
+       }
+     }
+
+     // READ command, read a certain message of a certain user
+     else if(input_str == "READ"){
+       input_str.append("\n");
+       strncpy(buffer,input_str.c_str(),BUF);
+
+       // name input
+       while(!overload){
+         getline(cin,input_str);
+         if(input_str.length() > 8){
+           cout << "input exceeds char limit. (max. 8 characters)<" << input_str << ">"<<  endl;
+         }
+         else{
+           overload = true; // gets set to true to break out of loop
+           input_str += "\n";
+           strcat(buffer,input_str.c_str());
+         }
+       }
+
+       overload = false; // reset overload for next input check
+
+       // let's trust the user for once and assume he knows the difference between a number and not a number
+       cin >> input_str;
+       input_str += "\n";
+       strcat(buffer,input_str.c_str());
+       send(create_socket, buffer, strlen (buffer), 0); // send user request
+       clear_buffer(buffer);
+
+       size=recv(create_socket,buffer,BUF-1, 0); //wait for answer from server
+       if (size>0){
+          buffer[size]= '\0';
+          cout << buffer;
+          clear_buffer(buffer);
+       }
+     }
+
+     // DEL command, delete a certain message from a certain user file
+     else if(input_str == "DEL"){
        strncpy(buffer,input,BUF);
        // username input
        overload = false; // reusing bool for next input exceeding
        do{
          if(overload){
            cout << "input exceeds char limit. (max. 8 characters)" << endl;
-         }
-         char *begin = &input[0];
-         char *end = begin + sizeof(input);
-         fill(begin,end,0);
-         fgets (input, BUF, stdin);
-         overload = true;
-       }
-       while(input[8] != '\n' && input[8] != '\0');
-       strcat(buffer,input);
-       send(create_socket, buffer, strlen (buffer), 0); // send user request
-       overload = false;
-
-       char *begin = &buffer[0];
-       char *end = begin + sizeof(buffer);
-       fill(begin,end,0);
-
-       size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
-       if (size>0)
-       {
-          buffer[size]= '\0';
-          cout << buffer << endl;
-       }
-     }
-     else if(strcmp (input, "READ\n") == 0){
-       strncpy(buffer,input,BUF);
-       // username input
-       overload = false; // reusing bool for next input exceeding
-       do{
-         if(overload){
-
-           cout << "input exceeds char limit. (max. 8 characters)READ" << endl;
          }
          char *begin = &input[0];
          char *end = begin + sizeof(input);
@@ -181,45 +236,15 @@ int main (int argc, char **argv) {
        if (size>0)
        {
           buffer[size]= '\0';
-          cout << buffer << endl;
        }
      }
-     else if(strcmp (input, "DEL\n") == 0){
-       strncpy(buffer,input,BUF);
-       // username input
-       overload = false; // reusing bool for next input exceeding
-       do{
-         if(overload){
-           cout << "input exceeds char limit. (max. 8 characters)" << endl;
-         }
-         char *begin = &input[0];
-         char *end = begin + sizeof(input);
-         fill(begin,end,0);
-         fgets (input, BUF, stdin);
-         overload = true;
-       }
-       while(input[8] != '\n' && input[8] != '\0');
-       strcat(buffer,input);
-       fgets (input, BUF, stdin);
-       strcat(buffer,input);
-       cout << buffer << endl;
-       send(create_socket, buffer, strlen (buffer), 0); // send user request
-
-       char *begin = &buffer[0];
-       char *end = begin + sizeof(buffer);
-       fill(begin,end,0);
-       overload = false;
-
-       size=recv(create_socket,buffer,BUF-1, 0); //wait for buffer from server
-       if (size>0)
-       {
-          buffer[size]= '\0';
-       }
-     }
-     else if(strcmp (input, "quit\n") == 0){
-       strncpy(buffer,input,BUF);
+     else if(input_str == ""){} // catch empty commands
+     else if(input_str == "quit"){
+       input_str += "\n";
+       strncpy(buffer,input_str.c_str(),BUF);
        break;
      }
+     // all other command inputs won't be accepted
      else{
        cout << "Unknown command, please repeat." << endl;
      }
@@ -229,7 +254,7 @@ int main (int argc, char **argv) {
   close (create_socket);
   return EXIT_SUCCESS;
 }
+// TODO
 // dyn buffer
-// fehlerbedingungen bei funktionsabbruch
-// fgets kann auch nichts einlesen - fehlermeldung
-// return codes anschauen
+// read versucht zu frueh wieder auf command input zu wechseln, bekommt ne leerzeile
+// del  programmieren
