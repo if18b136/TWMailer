@@ -40,6 +40,7 @@ int main (int argc, char **argv) {
 	uint32_t port_short;
 
 	port_short = atoi(argv[1]); //port has to be 4 numbers long
+	string path = argv[2];
 
 	while (1) {
 		create_socket = socket (AF_INET, SOCK_STREAM, 0); //get socket file descriptor
@@ -79,14 +80,14 @@ int main (int argc, char **argv) {
 				cout << "Command received: "<< token << endl;
 				username = strtok (NULL,"\n");
 				filename = username + ".txt";
-				cout << "Token: " << token << endl;
 				
 				// SEND command on server side
 				if(token == "SEND"){
 					cout << "Message received from: " << username << endl;
 					ofstream outfile;
-					outfile.open(filename,ios_base::app);
-					ifstream file(filename);
+					string path_file = path + "/" + filename;
+					outfile.open(path_file,ios_base::app);
+					ifstream file(path_file);
 
 					int msg_count = 1;
 
@@ -115,9 +116,10 @@ int main (int argc, char **argv) {
 				else if(token == "LIST"){
 					bool new_msg = true;  //starts with true so that first subject gets added in while loop
 					ofstream outfile;
-					ifstream file(filename);
 					cout << "looking for messages from: " << username << endl;
-					outfile.open(filename,ios_base::app);
+					string path_file = path + "/" + filename;
+					outfile.open(path_file,ios_base::app);
+					ifstream file(path_file);
 
 					getline(file, line);
 					if(line != "1"){
@@ -152,7 +154,6 @@ int main (int argc, char **argv) {
 						outfile.close();
 						num_str.append(input_str);
 						strncpy (buffer,num_str.c_str(), BUF);
-						cout << "buffer: <" << buffer << ">" << endl;
 						send(new_socket, buffer, strlen(buffer),0);
 						clear_buffer(buffer);
 						input_str = ""; // clear input string for reuse in READ
@@ -161,10 +162,11 @@ int main (int argc, char **argv) {
 				// READ command on Server
 				else if (token == "READ"){
 					bool found_msg = false, no_msg = true, recv_subj = true;
-					ofstream outfile;
-					ifstream file(filename);
 					cout << "looking for certain message from: " << username << endl;
-					outfile.open(filename,ios_base::app);
+					ofstream outfile;
+					string path_file = path + "/" + filename;
+					outfile.open(path_file,ios_base::app);
+					ifstream file(path_file);
 					string read = strtok(NULL,"\n");
 
 					getline(file, line);
@@ -207,9 +209,10 @@ int main (int argc, char **argv) {
 					bool found_msg = false, del_msg = false;
 					input_str = "";
 					ofstream outfile;
-					ifstream file(filename);
 					cout << "looking for certain message to delete from: " << username << endl;
-					outfile.open(filename,ios_base::app);
+					string path_file = path + "/" + filename;
+					outfile.open(path_file,ios_base::app);
+					ifstream file(path_file);
 					string del = strtok(NULL,"\n");
 
 					getline(file, line);
@@ -219,7 +222,7 @@ int main (int argc, char **argv) {
 						clear_buffer(buffer);
 					}
 					else{
-						string filename_temp = "temp_" + filename;
+						string filename_temp = path + "/temp_" + filename;
 						ifstream temp_file(filename_temp);
 						ofstream outfile_temp;
 						outfile_temp.open(filename_temp,ios_base::app);
@@ -237,8 +240,8 @@ int main (int argc, char **argv) {
 							}
 						}
 						outfile.close();
-						remove(filename.c_str());
-						rename(filename_temp.c_str(),filename.c_str());
+						remove(path_file.c_str());
+						rename(filename_temp.c_str(),path_file.c_str());
 						outfile_temp.close();
 						// delete old file and rename new one
 						if(!del_msg){

@@ -229,6 +229,7 @@ int main (int argc, char **argv) {
 				input_str += "\n";
 				strcat(buffer,input_str.c_str());
 				send(create_socket, buffer, strlen (buffer), 0); // send user request
+				clear_buffer(buffer);
 
 				size=recv(create_socket,buffer,BUF-1, 0); //wait for answer from server
 				if (size>0){
