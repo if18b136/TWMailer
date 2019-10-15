@@ -207,7 +207,7 @@ int main (int argc, char **argv) {
 			// DEL command, delete a certain message from a certain user file
 			else if(input_str == "DEL"){
 				input_str += "\n";
-				strncpy(buffer,input.c_str(),BUF);
+				strncpy(buffer,input_str.c_str(),BUF);
 			
 				// name input
 				while(!overload){
@@ -225,7 +225,7 @@ int main (int argc, char **argv) {
 				overload = false; // reset overload for next input check
 
 				// let's trust the user for once and assume he knows the difference between a number and not a number
-				getline(cin, input_str); // simply cin >> input_str takes the command line enter as another input
+				getline(cin, input_str); // cin >> input_str takes the command line enter as another input
 				input_str += "\n";
 				strcat(buffer,input_str.c_str());
 				send(create_socket, buffer, strlen (buffer), 0); // send user request
@@ -237,7 +237,8 @@ int main (int argc, char **argv) {
 					clear_buffer(buffer);
 				}
 			}
-			else if(input_str == ""){} // catch empty commands
+			// catch empty commands
+			else if(input_str == ""){} 
 			else if(input_str == "quit"){
 				input_str += "\n";
 				strncpy(buffer,input_str.c_str(),BUF);

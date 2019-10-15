@@ -149,6 +149,7 @@ int main (int argc, char **argv) {
 								new_msg = true; //prepare for adding num and subject in the next iterations;
 							}
 						}
+						outfile.close();
 						num_str.append(input_str);
 						strncpy (buffer,num_str.c_str(), BUF);
 						cout << "buffer: <" << buffer << ">" << endl;
@@ -203,11 +204,13 @@ int main (int argc, char **argv) {
 					}
 				}
 				else if (token == "DEL"){
+					bool found_msg = false, del_msg = false;
+					input_str = "";
 					ofstream outfile;
 					ifstream file(filename);
 					cout << "looking for certain message to delete from: " << username << endl;
 					outfile.open(filename,ios_base::app);
-					token = strtok(NULL,"\n");
+					string del = strtok(NULL,"\n");
 
 					getline(file, line);
 					if(line != "1"){
@@ -217,8 +220,37 @@ int main (int argc, char **argv) {
 					}
 					else{
 						string filename_temp = "temp_" + filename;
-						ofstream of_tempfile;
-						ifstream tempfile(filename_temp);
+						ifstream temp_file(filename_temp);
+						ofstream outfile_temp;
+						outfile_temp.open(filename_temp,ios_base::app);
+						outfile_temp << line << endl;	//get first line into temp file 
+						while(getline(file,line)){
+							if(line == del){
+								found_msg = true;
+							}
+							if(!found_msg){	// copy lines as long as we haven't reached our message
+								outfile_temp << line << endl;
+							}
+							if(line == "." && found_msg){
+								found_msg = false;
+								del_msg = true;
+							}
+						}
+						outfile.close();
+						remove(filename.c_str());
+						rename(filename_temp.c_str(),filename.c_str());
+						outfile_temp.close();
+						// delete old file and rename new one
+						if(!del_msg){
+							strncpy (buffer,"ERR\n", BUF);
+							send(new_socket, buffer, strlen(buffer),0);
+							clear_buffer(buffer);
+						}
+						else{
+							strncpy (buffer,"OK\n", BUF);
+							send(new_socket, buffer, strlen(buffer),0);
+							clear_buffer(buffer);
+						}
 					}
 				}
 			}
