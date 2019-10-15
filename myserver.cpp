@@ -1,5 +1,5 @@
-/* myserver.c */
-// es fehlen fehlerabfragen und string buffer ueberschreibungsschutz
+
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -58,7 +58,7 @@ int main (int argc, char **argv) {
 			perror("bind error");
 			return EXIT_FAILURE;
 		}
-		listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler - noch nicht ganz sauber ausprogrammiert
+		listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler
 
 		addrlen = sizeof (struct sockaddr_in);
 		printf("Waiting for connections...\n");
@@ -226,7 +226,12 @@ int main (int argc, char **argv) {
 						ifstream temp_file(filename_temp);
 						ofstream outfile_temp;
 						outfile_temp.open(filename_temp,ios_base::app);
+						if(line == del){
+							found_msg = true;
+						}
+						else{
 						outfile_temp << line << endl;	//get first line into temp file 
+						}
 						while(getline(file,line)){
 							if(line == del){
 								found_msg = true;
@@ -271,80 +276,3 @@ int main (int argc, char **argv) {
 	close (create_socket);
 	return EXIT_SUCCESS;
 }
-
-/*ofstream outfile;
-ifstream file(username);
-int message_count = 1;
-string line;
-string message_nr_str = strtok (NULL,"\n");
-int message_nr = stoi(message_nr_str ,nullptr);
-cout << "message Nr" << message_nr << endl;
-
-outfile.open(username, ios_base::app);
-cout << "File openeded" << endl;
-getline(file,line);
-if(line!="1"){
-cout << "no 1 here?" << endl;
-char *begin = &buffer[0];
-char *end = begin + sizeof(buffer);
-fill(begin,end,0);
-strcpy(buffer, "ERR");
-send(new_socket, buffer, strlen(buffer),0);
-}
-else{
-while(getline(file, line)){
-cout << "line gotten.." << endl;
-if(line == "."){
-char *begin = &buffer[0];
-char *end = begin + sizeof(buffer);
-fill(begin,end,0);
-cout << "end of first msg found" << endl;
-message_count++;
-cout << "msg_count: " << message_count <<endl << "message_nr: " << message_nr<< endl;
-if(message_count == message_nr){
-getline(file, line);
-cout << "message found" << endl;
-}
-
-}
-else if(file.eof()){
-cout << "EOF.. nothing found"<< endl;
-strcpy(buffer, "ERR");
-send(new_socket, buffer, strlen(buffer),0);
-outfile.close();
-break;
-}
-if (line == "SEND" && message_count == message_nr){
-cout << "deleting.."<<endl;
-char *begin = &buffer[0];
-char *end = begin + sizeof(buffer);
-fill(begin,end,0);
-
-string ok = "OK\n";
-strcat(buffer, ok.c_str());
-send(new_socket, buffer, strlen(buffer),0);
-outfile.close();
-message_count = 0;
-
-outfile.close();
-break;
-
-
-/*while(getline(file, line)){
-if(line != "."){
-line.append("\n");
-strcat(buffer, line.c_str());
-}
-else{
-
-outfile.close();
-message_count = 0;
-break;
-}
-}
-}
-}
-}
-}*/
-//else{
-//error
