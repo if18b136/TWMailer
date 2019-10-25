@@ -17,8 +17,8 @@ UE1
 
 UE2
 - Thread catching at the end 
-- LDAP Anmeldung 
-- Login-Command
+- LDAP Anmeldung Cleanup 
+- LDAP Anmeldung Rueckmeldung an CLient
 - Sperre der IP nach 3mal falscher Eingabe
 
 
