@@ -1,5 +1,3 @@
-
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -14,9 +12,15 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#define BUF 1024
-#define PORT 6543
 
+#include <pthread.h>
+#include <ldap.h>
+
+#define BUF 1024
+int THREAD_NUM = 0;
+char *path_global;
+
+// pthread_join();
 using namespace std;
 
 void clear_buffer(char *buffer){
@@ -25,53 +29,19 @@ void clear_buffer(char *buffer){
 	fill(begin,end,0);
 }
 
-int main (int argc, char **argv) {
+void *test_thread(void *arg) { //needs the socket connection parameters as argunments
 
-	if( argc < 3 ){
-		cout << "Usage: " << argv[0] << " Port Verzeichnispfad" << endl;
-		exit(EXIT_FAILURE);
-	}
 
-	int create_socket, new_socket;
-	socklen_t addrlen;
+	int size, *socket_p, new_socket;
 	char buffer[BUF];
-	int size, num;
-	struct sockaddr_in address, cliaddress;
-	uint32_t port_short;
+	string path = path_global;
 
-	port_short = atoi(argv[1]); //port has to be 4 numbers long
-	string path = argv[2];
+	socket_p = reinterpret_cast<int*>(arg);
+	new_socket = * socket_p;
 
-	while (1) {
-		create_socket = socket (AF_INET, SOCK_STREAM, 0); //get socket file descriptor
-		if (create_socket < 0) {  //check if socket was created succesfully
-			perror("ERROR opening socket");
-			return EXIT_FAILURE;
-		}
+	cout << "Thread number: " << THREAD_NUM << endl;
 
-		memset(&address,0,sizeof(address));
-		address.sin_family = AF_INET;
-		address.sin_addr.s_addr = INADDR_ANY;
-		address.sin_port = htons (port_short);
-
-		if (bind ( create_socket, (struct sockaddr *) &address, sizeof (address)) != 0) { // descriptor und bind adresse designiert, wo ich den socket gerne haben moechte, man erhaelt einen offenen socket
-			perror("bind error");
-			return EXIT_FAILURE;
-		}
-		listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler
-
-		addrlen = sizeof (struct sockaddr_in);
-		printf("Waiting for connections...\n");
-		new_socket = accept ( create_socket, (struct sockaddr *) &cliaddress, &addrlen ); // blockiert und wartet bis client antwortet.
-
-		if (new_socket > 0){  // client verbunden
-			printf ("Client connected from %s:%d...\n", inet_ntoa (cliaddress.sin_addr),ntohs(cliaddress.sin_port));
-			strcpy(buffer,"Welcome to myserver!\n");	// welcome message
-			send(new_socket, buffer, strlen(buffer),0);
-			clear_buffer(buffer);
-			close (create_socket);
-		}
-		do {
+	do {
 			size = recv (new_socket, buffer, BUF-1, 0);
 			if( size > 0){
 				buffer[size] = '\0';
@@ -81,8 +51,13 @@ int main (int argc, char **argv) {
 				username = strtok (NULL,"\n");
 				filename = username + ".txt";
 				
+				//LOGIN command on server
+				if(token == "LOGIN"){
+					string password = strtok(NULL,"\n");
+					
+				}
 				// SEND command on server side
-				if(token == "SEND"){
+				else if(token == "SEND"){
 					cout << "Message received from: " << username << endl;
 					ofstream outfile;
 					string path_file = path + "/" + filename;
@@ -205,6 +180,7 @@ int main (int argc, char **argv) {
 						}
 					}
 				}
+				//DEL command on Server
 				else if (token == "DEL"){
 					bool found_msg = false, del_msg = false;
 					input_str = "";
@@ -268,11 +244,72 @@ int main (int argc, char **argv) {
 			}
 			else{
 				perror("recv error");
-				return EXIT_FAILURE;
+				return 0; // former EXIT_FAILURE
 			}
 		} while (strncmp (buffer, "quit", 4)  != 0);
-		close (new_socket);
+		close(new_socket);
+		pthread_exit(NULL);
+}
+
+
+
+int main (int argc, char **argv) {
+
+	if( argc < 3 ){
+		cout << "Usage: " << argv[0] << " Port Verzeichnispfad" << endl;
+		exit(EXIT_FAILURE);
+	}
+
+	int create_socket, new_socket, status;
+	socklen_t addrlen;
+	char buffer[BUF];
+	int num;
+	struct sockaddr_in address, cliaddress;
+	uint32_t port_short;
+
+	// thread initialize
+	pthread_t thread;
+
+	port_short = atoi(argv[1]); //port has to be 4 numbers long
+	path_global = argv[2];
+	
+	create_socket = socket (AF_INET, SOCK_STREAM, 0); //get socket file descriptor
+	if (create_socket < 0) {  //check if socket was created succesfully
+		perror("ERROR opening socket");
+		return EXIT_FAILURE;
+	}
+
+
+	memset(&address,0,sizeof(address));
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons (port_short);
+
+	if (bind ( create_socket, (struct sockaddr *) &address, sizeof (address)) != 0) { // descriptor und bind adresse designiert, wo ich den socket gerne haben moechte, man erhaelt einen offenen socket
+		perror("bind error");
+		return EXIT_FAILURE;
+	}
+	listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler
+
+	addrlen = sizeof (struct sockaddr_in);
+
+	while (1) {
+		printf("Waiting for connections...\n");
+		
+		new_socket = accept ( create_socket, (struct sockaddr *) &cliaddress, &addrlen ); // blockiert und wartet bis client antwortet.
+	
+		if (new_socket > 0){  // client verbunden
+			printf ("Client connected from %s:%d...\n", inet_ntoa (cliaddress.sin_addr),ntohs(cliaddress.sin_port));
+			strcpy(buffer,"Welcome to myserver!\n");	// welcome message
+			send(new_socket, buffer, strlen(buffer),0);
+			clear_buffer(buffer);
+
+			status = pthread_create(&thread, NULL, test_thread, (void *) &new_socket); // after client connects successfully, we need to open a thread for the client
+			THREAD_NUM++;
+		}
+		//close (new_socket);
 	}
 	close (create_socket);
+	pthread_join;
 	return EXIT_SUCCESS;
 }
