@@ -16,6 +16,13 @@
 #include <pthread.h>
 #include <ldap.h>
 
+#define LDAP_URI "ldap://ldap.technikum-wien.at:389"
+#define SEARCHBASE "dc=technikum-wien,dc=at"
+#define SCOPE LDAP_SCOPE_SUBTREE
+#define FILTER "(uid=if18b*)"
+#define BIND_USER ""	/* anonymous bind with user and pw empty */
+#define BIND_PW ""
+
 #define BUF 1024
 int THREAD_NUM = 0;
 char *path_global;
@@ -54,6 +61,158 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 				//LOGIN command on server
 				if(token == "LOGIN"){
 					string password = strtok(NULL,"\n");
+
+					LDAP *ld;			/* LDAP resource handle */
+					LDAPMessage *result, *e;	/* LDAP result handle */
+					BerElement *ber;		/* array of attributes */
+					char *attribute;
+					BerValue **vals;
+
+					BerValue *servercredp;
+					BerValue cred;
+					cred.bv_val = (char *)BIND_PW;
+					cred.bv_len=strlen(BIND_PW);
+					int i,rc=0;
+
+					const char *attribs[] = { "uid", "cn", NULL };		/* attribute array for search */
+
+					int ldapversion = LDAP_VERSION3;
+
+					/* setup LDAP connection */
+					if (ldap_initialize(&ld,LDAP_URI) != LDAP_SUCCESS){
+						fprintf(stderr,"ldap_init failed");
+						return 0; // former EXIT_FAILURE
+					}
+
+					printf("connected to LDAP server %s\n",LDAP_URI);
+
+					if ((rc = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS){
+						fprintf(stderr, "ldap_set_option(PROTOCOL_VERSION): %s\n", ldap_err2string(rc));
+						ldap_unbind_ext_s(ld, NULL, NULL);
+						return 0; // former EXIT_FAILURE
+					}
+
+					if ((rc = ldap_start_tls_s(ld, NULL, NULL)) != LDAP_SUCCESS){
+						fprintf(stderr, "ldap_start_tls_s(): %s\n", ldap_err2string(rc));
+						ldap_unbind_ext_s(ld, NULL, NULL);
+						return 0; // former EXIT_FAILURE
+					}
+
+					/* anonymous bind */
+					rc = ldap_sasl_bind_s(ld,BIND_USER,LDAP_SASL_SIMPLE,&cred,NULL,NULL,&servercredp);
+
+					if (rc != LDAP_SUCCESS){
+						fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
+						ldap_unbind_ext_s(ld, NULL, NULL);
+						return 0; // former EXIT_FAILURE
+					}
+					else{
+						printf("bind successful\n");
+					}
+
+					/* perform ldap search */
+					rc = ldap_search_ext_s(ld, SEARCHBASE, SCOPE, FILTER, (char **)attribs, 0, NULL, NULL, NULL, 500, &result);
+
+					if (rc != LDAP_SUCCESS){
+						fprintf(stderr,"LDAP search error: %s\n",ldap_err2string(rc));
+						ldap_unbind_ext_s(ld, NULL, NULL);
+						return 0; // former EXIT_FAILURE
+					}
+
+					printf("Total results: %d\n", ldap_count_entries(ld, result));
+
+
+
+					// // OUTPUT for all user details
+					// for (e = ldap_first_entry(ld, result); e != NULL; e = ldap_next_entry(ld,e))
+					// {
+					//    printf("DN: %s\n", ldap_get_dn(ld,e));
+
+					//    /* Now print the attributes and values of each found entry */
+
+					//    for (attribute = ldap_first_attribute(ld,e,&ber); attribute!=NULL; attribute = ldap_next_attribute(ld,e,ber))
+					//    {
+					//       if ((vals=ldap_get_values_len(ld,e,attribute)) != NULL)
+					//       {
+					//          for (i=0;i < ldap_count_values_len(vals);i++)
+					//          {
+					//             printf("\t%s: %s\n",attribute,vals[i]->bv_val);
+					//          }
+					//          ldap_value_free_len(vals);
+					//       }
+					//       /* free memory used to store the attribute */
+					//       ldap_memfree(attribute);
+					//    }
+
+					//    /* free memory used to store the value structure */
+					//    if (ber != NULL) ber_free(ber,0);
+
+					//    printf("\n");
+					// }
+
+
+					//##########################################
+					//User ID compared to LDAP Database (LOGIN)
+					//##########################################
+
+					bool overload = false;	//flag for the input
+
+					bool user_found = false;
+					string input_uid = username;	//user input
+					string cmp_uid = "";	//"buffer" for cutting/comparing database entries
+					string dn_uid = "";
+
+
+					//iterates ldap entries until next entry is NULL (last entry)
+					for(e = ldap_first_entry(ld, result); e != NULL; e = ldap_next_entry(ld,e)){
+
+						// long DN sausage
+						cmp_uid = ldap_get_dn(ld,e);
+
+						// DN sausage is being cut into pieces -> "if18b***"
+						cmp_uid = cmp_uid.substr(4,8);
+
+						// cout << "database uid" << cmp_uid << endl;		//debug
+						// cout << "input uid" << input_uid << endl;		//debug
+
+						//compares entered UID to IDs in the database
+						if(strncmp(input_uid.c_str(), cmp_uid.c_str(), 8)==0){
+
+							cout << "bingo" << endl;	//username was found!
+							dn_uid = ldap_get_dn(ld,e); //full user id sausage
+
+							cout << dn_uid << endl;
+
+							strncpy (buffer,"OK\n", BUF);
+							send(new_socket, buffer, strlen(buffer),0);
+							clear_buffer(buffer);
+
+							user_found = true;
+
+
+							// User gets logged into LDAP
+
+							break;
+
+						}
+					}
+
+					//checks if user was found or not
+					if(user_found == false){
+
+						cout << "user was not found!" << endl;
+						strncpy (buffer,"ERR\n", BUF);
+						send(new_socket, buffer, strlen(buffer),0);
+						clear_buffer(buffer);
+
+					}
+
+					/* free memory used for result */
+					ldap_msgfree(result);
+					printf("LDAP search suceeded\n");
+
+					ldap_unbind_ext_s(ld, NULL, NULL);
+
 					
 				}
 				// SEND command on server side
