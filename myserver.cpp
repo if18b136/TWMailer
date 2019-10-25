@@ -155,8 +155,6 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					//User ID compared to LDAP Database (LOGIN)
 					//##########################################
 
-					bool overload = false;	//flag for the input
-
 					bool user_found = false;
 					string input_uid = username;	//user input
 					string cmp_uid = "";	//"buffer" for cutting/comparing database entries
@@ -187,10 +185,28 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							send(new_socket, buffer, strlen(buffer),0);
 							clear_buffer(buffer);
 
+							// unbind anonymous user
+							// bind user with transfered credentials
+							
+
+							//ldap_unbind_ext_s(ld, NULL, NULL);
+						
+
+							cred.bv_val = (char *)password.c_str();
+							cred.bv_len=strlen(password.c_str());
+
+							rc = ldap_sasl_bind_s(ld,dn_uid.c_str(),LDAP_SASL_SIMPLE,&cred,NULL,NULL,&servercredp);
+
+							if (rc != LDAP_SUCCESS){
+								fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
+								ldap_unbind_ext_s(ld, NULL, NULL);
+								return 0; // former EXIT_FAILURE
+							}
+							else{
+								printf("bind successful, user logged in\n");
+							}
+
 							user_found = true;
-
-
-							// User gets logged into LDAP
 
 							break;
 
@@ -209,7 +225,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 					/* free memory used for result */
 					ldap_msgfree(result);
-					printf("LDAP search suceeded\n");
+					printf("LDAP search finished\n");
 
 					ldap_unbind_ext_s(ld, NULL, NULL);
 
