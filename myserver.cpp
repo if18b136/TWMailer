@@ -24,7 +24,7 @@
 #define BIND_PW ""
 
 #define BUF 1024
-int THREAD_NUM = 0;
+int THREAD_NUM = 0; // global thread counter
 char *path_global;
 
 // pthread_join();
@@ -412,8 +412,9 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					}
 				}
 			}
-			else if (size == 0){	// fehlermeldungen checken
-				printf("Client closed remote socket\n");
+			else if (size == 0){
+				THREAD_NUM--;
+				cout << "Cient closed remote socket. " << THREAD_NUM << " Clients remain opened." << endl;
 				break;
 			}
 			else{

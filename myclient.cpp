@@ -147,6 +147,9 @@ int main (int argc, char **argv) {
 						if(input_str.length() > 8){
 							cout << "input exceeds char limit. (max. 8 characters)<" << input_str << ">"<<  endl;
 						}
+						else if(input_str.length() == 0){
+							cout << "empty input not allowed." << endl;
+						}
 						else{
 							overload = true; // gets set to true to break out of loop
 							input_str += "\n";
@@ -162,6 +165,9 @@ int main (int argc, char **argv) {
 						if(input_str.length() > 8){
 							cout << "input exceeds char limit. (max. 8 characters) <" << input_str << ">"<<  endl;
 						}
+						else if(input_str.length() == 0){
+							cout << "empty input not allowed." << endl;
+						}
 						else{
 							overload = true; // gets set to true to break out of loop
 							input_str += "\n";
@@ -176,6 +182,9 @@ int main (int argc, char **argv) {
 						getline(cin,input_str);
 						if(input_str.length() > 80){
 							cout << "input exceeds char limit. (max. 80 characters) <" << input_str << ">"<<  endl;
+						}
+						else if(input_str.length() == 0){
+							cout << "empty input not allowed." << endl;
 						}
 						else{
 							overload = true; // gets set to true to break out of loop
@@ -217,6 +226,9 @@ int main (int argc, char **argv) {
 						if(input_str.length() > 8){
 							cout << "input exceeds char limit. (max. 8 characters)<" <<  endl;
 						}
+						else if(input_str.length() == 0){
+							cout << "empty input not allowed." << endl;
+						}
 						else{
 							overload = true; // gets set to true to break out of loop
 							input_str += "\n";
@@ -253,6 +265,9 @@ int main (int argc, char **argv) {
 						getline(cin,input_str);
 						if(input_str.length() > 8){
 							cout << "input exceeds char limit. (max. 8 characters)<" <<  endl;
+						}
+						else if(input_str.length() == 0){
+							cout << "empty input not allowed." << endl;
 						}
 						else{
 							overload = true; // gets set to true to break out of loop
@@ -292,6 +307,9 @@ int main (int argc, char **argv) {
 						getline(cin,input_str);
 						if(input_str.length() > 8){
 							cout << "input exceeds char limit. (max. 8 characters)<" <<  endl;
+						}
+						else if(input_str.length() == 0){
+							cout << "empty input not allowed." << endl;
 						}
 						else{
 							overload = true; // gets set to true to break out of loop

@@ -10,8 +10,6 @@ Two upfront problems that still persist within the code:
 UE1
 - dyn buffer
 - zahlen neu vergeben nach del
-- es ist möglich einen leeren Empfänger/Sender einzugeben und die Nachricht zu verschicken
-- leere Nachrichten(Sender, Empfänger, Betreff und Inhalt leer) werden zwar nicht gespeichert, können aber "verschickt" werden ohne, dass vom Server ein ERR zurückkommt
 - Nachdem eine leere Nachricht verschickt wurde, kann es zu einem Speicherzugriffsfehler(SIGSEGV) kommen
 - immer dann, wenn falsche Benutzernamen eingegeben wurden, werden neue leere txt-Files erzeugt, nach kurzer Zeit ist das gesamte Verzeichnis voller "toter" Textfiles (z.B. DEL.txt, ..txt, asdfasdf.txt, ...)
 
