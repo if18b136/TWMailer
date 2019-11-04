@@ -122,7 +122,6 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					printf("Total results: %d\n", ldap_count_entries(ld, result));
 
 
-
 					// // OUTPUT for all user details
 					// for (e = ldap_first_entry(ld, result); e != NULL; e = ldap_next_entry(ld,e))
 					// {
@@ -193,7 +192,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 						
 
 							cred.bv_val = (char *)password.c_str();
-							cred.bv_len=strlen(password.c_str());
+							cred.bv_len = strlen(password.c_str());
 
 							rc = ldap_sasl_bind_s(ld,dn_uid.c_str(),LDAP_SASL_SIMPLE,&cred,NULL,NULL,&servercredp);
 
