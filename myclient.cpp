@@ -69,6 +69,11 @@ int main (int argc, char **argv) {
 	do{
 		while(input_str != "quit"){
 			overload = false;  // set overload to false initially for any case of unexpected operation cancelling
+			cout << endl;
+			cout << "------------------------------------" << endl;
+			cout << "| LOGIN | SEND | LIST | READ | DEL |" << endl;
+			cout << "------------------------------------" << endl;
+			cout << endl;
 			cout << "Enter your command: "<< endl;
 			//fgets (str, BUF, stdin);
 			getline(cin, input_str);
@@ -79,6 +84,7 @@ int main (int argc, char **argv) {
 
 				// username input
 				while(!overload){
+					cout << "UID: ";
 					getline(cin,input_str);
 					if(input_str.length() > 8){
 						cout << "input exceeds char limit. (max. 8 characters)" << endl;
@@ -97,6 +103,7 @@ int main (int argc, char **argv) {
 
 				// password input
 				while(!overload){
+					cout << "Password: ";
 					getline(cin,input_str);
 					if(input_str.length() == 0){
 						cout << "empty input not allowed." << endl;
@@ -120,14 +127,14 @@ int main (int argc, char **argv) {
 
 					string token = strtok (buffer,"\n");
 					if(token == "OK"){
-						// do x
+						// set logged in boolean to true so other commands can be used
 						logged_in = true;
 					}
 					else if(token == "ERR"){
-						// do y
+						// do nothing - you will have to reenter your credentials
 					}
 					else{
-						// should not occur
+						// should not occur but cathing it removes unwanted behaviour
 					}
 				}
 			}
@@ -143,9 +150,10 @@ int main (int argc, char **argv) {
 
 					// Sender input
 					while(!overload){
+						cout << "From: ";
 						getline(cin,input_str);
 						if(input_str.length() > 8){
-							cout << "input exceeds char limit. (max. 8 characters)<" << input_str << ">"<<  endl;
+							cout << "input exceeds char limit. (max. 8 characters)" <<  endl;
 						}
 						else if(input_str.length() == 0){
 							cout << "empty input not allowed." << endl;
@@ -161,9 +169,10 @@ int main (int argc, char **argv) {
 
 					// receiver input
 					while(!overload){
+						cout << "To: ";
 						getline(cin,input_str);
 						if(input_str.length() > 8){
-							cout << "input exceeds char limit. (max. 8 characters) <" << input_str << ">"<<  endl;
+							cout << "input exceeds char limit. (max. 8 characters)" <<  endl;
 						}
 						else if(input_str.length() == 0){
 							cout << "empty input not allowed." << endl;
@@ -179,9 +188,10 @@ int main (int argc, char **argv) {
 
 					//subject input
 					while(!overload){
+						cout << "Subject: ";
 						getline(cin,input_str);
 						if(input_str.length() > 80){
-							cout << "input exceeds char limit. (max. 80 characters) <" << input_str << ">"<<  endl;
+							cout << "input exceeds char limit. (max. 80 characters)" <<  endl;
 						}
 						else if(input_str.length() == 0){
 							cout << "empty input not allowed." << endl;
@@ -194,7 +204,7 @@ int main (int argc, char **argv) {
 					}
 
 					overload = false;
-
+					cout << "Message (a single '.' as input marks the end of the message): " << endl;
 					getline(cin,input_str);  //get first line of the text message to prevent ending when someone puts "." as subject
 					// message input
 					while(input_str != "."){
@@ -222,9 +232,10 @@ int main (int argc, char **argv) {
 
 					// name input
 					while(!overload){
+						cout << "UID (From): ";
 						getline(cin,input_str);
 						if(input_str.length() > 8){
-							cout << "input exceeds char limit. (max. 8 characters)<" <<  endl;
+							cout << "input exceeds char limit. (max. 8 characters)" <<  endl;
 						}
 						else if(input_str.length() == 0){
 							cout << "empty input not allowed." << endl;
@@ -262,6 +273,7 @@ int main (int argc, char **argv) {
 
 					// name input
 					while(!overload){
+						cout << "UID (From): ";
 						getline(cin,input_str);
 						if(input_str.length() > 8){
 							cout << "input exceeds char limit. (max. 8 characters)<" <<  endl;
@@ -304,9 +316,10 @@ int main (int argc, char **argv) {
 				
 					// name input
 					while(!overload){
+						cout << "UID (From): ";
 						getline(cin,input_str);
 						if(input_str.length() > 8){
-							cout << "input exceeds char limit. (max. 8 characters)<" <<  endl;
+							cout << "input exceeds char limit. (max. 8 characters)" <<  endl;
 						}
 						else if(input_str.length() == 0){
 							cout << "empty input not allowed." << endl;
