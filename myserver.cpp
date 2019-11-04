@@ -30,6 +30,11 @@ char *path_global;
 // pthread_join();
 using namespace std;
 
+struct thread_data {
+	int socket_int;
+	string ip_addr;
+};
+
 void clear_buffer(char *buffer){
 	char *begin = &buffer[0];
 	char *end = begin + sizeof(buffer);
@@ -38,13 +43,17 @@ void clear_buffer(char *buffer){
 
 void *test_thread(void *arg) { //needs the socket connection parameters as argunments
 
+	struct thread_data *data_p;
+	data_p = (struct thread_data *) arg;
 
 	int size, *socket_p, new_socket;
 	char buffer[BUF];
 	string path = path_global;
 
-	socket_p = reinterpret_cast<int*>(arg);
-	new_socket = * socket_p;
+	//socket_p = reinterpret_cast<int*>(arg);
+	new_socket = data_p->socket_int;
+
+	cout << "IP Address: " << data_p->ip_addr << endl;
 
 	cout << "Thread number: " << THREAD_NUM << endl;
 
@@ -122,38 +131,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					printf("Total results: %d\n", ldap_count_entries(ld, result));
 
 
-					// // OUTPUT for all user details
-					// for (e = ldap_first_entry(ld, result); e != NULL; e = ldap_next_entry(ld,e))
-					// {
-					//    printf("DN: %s\n", ldap_get_dn(ld,e));
-
-					//    /* Now print the attributes and values of each found entry */
-
-					//    for (attribute = ldap_first_attribute(ld,e,&ber); attribute!=NULL; attribute = ldap_next_attribute(ld,e,ber))
-					//    {
-					//       if ((vals=ldap_get_values_len(ld,e,attribute)) != NULL)
-					//       {
-					//          for (i=0;i < ldap_count_values_len(vals);i++)
-					//          {
-					//             printf("\t%s: %s\n",attribute,vals[i]->bv_val);
-					//          }
-					//          ldap_value_free_len(vals);
-					//       }
-					//       /* free memory used to store the attribute */
-					//       ldap_memfree(attribute);
-					//    }
-
-					//    /* free memory used to store the value structure */
-					//    if (ber != NULL) ber_free(ber,0);
-
-					//    printf("\n");
-					// }
-
-
-					//##########################################
 					//User ID compared to LDAP Database (LOGIN)
-					//##########################################
-
 					bool user_found = false;
 					string input_uid = username;	//user input
 					string cmp_uid = "";	//"buffer" for cutting/comparing database entries
@@ -394,11 +372,30 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 								del_msg = true;
 							}
 						}
+						// delete old file and rename new one
 						outfile.close();
 						remove(path_file.c_str());
 						rename(filename_temp.c_str(),path_file.c_str());
 						outfile_temp.close();
-						// delete old file and rename new one
+
+						/*
+
+						 Now we need to rephrase the msg numbers - Not done
+						outfile.open(path_file,ios_base::app);
+						ifstream file_d(path_file);
+						int del_num = 1;
+
+						// Check if the first message has been deleted.
+						getline(file_d,line);
+						if(line != "1"){
+
+						}
+						while(getline(file_d,line)){
+						
+						}
+
+						*/
+
 						if(!del_msg){
 							strncpy (buffer,"ERR\n", BUF);
 							send(new_socket, buffer, strlen(buffer),0);
@@ -467,6 +464,8 @@ int main (int argc, char **argv) {
 	listen (create_socket, 5); // gibt int zurueck, wenn es funktioniert hat, eine fehlermeldung, wenn fehler
 
 	addrlen = sizeof (struct sockaddr_in);
+	
+	struct thread_data td; // struct initialisation
 
 	while (1) {
 		printf("Waiting for connections...\n");
@@ -475,11 +474,16 @@ int main (int argc, char **argv) {
 	
 		if (new_socket > 0){  // client verbunden
 			printf ("Client connected from %s:%d...\n", inet_ntoa (cliaddress.sin_addr),ntohs(cliaddress.sin_port));
+			
+			td.socket_int = new_socket;
+			td.ip_addr = inet_ntoa (cliaddress.sin_addr);
+
 			strcpy(buffer,"Welcome to myserver!\n");	// welcome message
 			send(new_socket, buffer, strlen(buffer),0);
 			clear_buffer(buffer);
 
-			status = pthread_create(&thread, NULL, test_thread, (void *) &new_socket); // after client connects successfully, we need to open a thread for the client
+
+			status = pthread_create(&thread, NULL, test_thread, (void *) &td); // after client connects successfully, we need to open a thread for the client
 			THREAD_NUM++;
 		}
 		//close (new_socket);
