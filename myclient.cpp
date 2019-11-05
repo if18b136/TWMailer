@@ -26,6 +26,38 @@ string uppercase(string str){
 	return str;
 }
 
+string getpass(const char *prompt, bool show_asterisk=true)
+{
+  const char BACKSPACE=127;
+  const char RETURN=10;
+
+  string password;
+  unsigned char ch=0;
+
+  cout <<prompt<<endl;
+
+  while((ch=getch())!=RETURN)
+    {
+       if(ch==BACKSPACE)
+         {
+            if(password.length()!=0)
+              {
+                 if(show_asterisk)
+                 cout <<"\b \b";
+                 password.resize(password.length()-1);
+              }
+         }
+       else
+         {
+             password+=ch;
+             if(show_asterisk)
+                 cout <<'*';
+         }
+    }
+  cout <<endl;
+  return password;
+}
+
 int main (int argc, char **argv) {
 	int create_socket;    // Integer for socket creation and it's error handling
 	char buffer[BUF], input[BUF]; // Character Arrays, buffer is the final datastream that gets send to the server, input is used for input, concatenation and copies
@@ -93,7 +125,7 @@ int main (int argc, char **argv) {
 				// username input
 				while(!overload){
 					cout << "UID: ";
-					getline(cin,input_str);
+					input_str=getpass("Password: ",true);
 					if(input_str.length() > 8){
 						cout << "input exceeds char limit. (max. 8 characters)" << endl;
 					}
