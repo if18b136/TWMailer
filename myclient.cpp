@@ -142,7 +142,7 @@ int main (int argc, char **argv) {
 				// username input
 				while(!overload){
 					cout << "UID: ";
-					input_str=getpass("Password: ",true);
+					getline(cin,input_str);
 					if(input_str.length() > 8){
 						cout << "input exceeds char limit. (max. 8 characters)" << endl;
 					}
@@ -160,8 +160,7 @@ int main (int argc, char **argv) {
 
 				// password input
 				while(!overload){
-					cout << "Password: ";
-					getline(cin,input_str);
+					input_str=getpass("Password: ",true);
 					if(input_str.length() == 0){
 						cout << "empty input not allowed." << endl;
 					}
