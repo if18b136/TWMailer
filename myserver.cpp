@@ -41,6 +41,13 @@ void clear_buffer(char *buffer){
 	fill(begin,end,0);
 }
 
+string lowercase(string str){
+	for(unsigned int i = 0; i < str.length(); ++i) {
+    	str[i] = tolower(str[i]);
+	}
+	return str;
+}
+
 void *test_thread(void *arg) { //needs the socket connection parameters as argunments
 
 	struct thread_data *data_p;
@@ -53,8 +60,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 	//socket_p = reinterpret_cast<int*>(arg);
 	new_socket = data_p->socket_int;
 
-	cout << "IP Address: " << data_p->ip_addr << endl;
-
+	// cout << "IP Address: " << data_p->ip_addr << endl;
 	cout << "Thread number: " << THREAD_NUM << endl;
 
 	do {

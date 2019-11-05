@@ -19,6 +19,13 @@ void clear_buffer(char *buffer){
 	fill(begin,end,0);
 }
 
+string uppercase(string str){
+	for(unsigned int i = 0; i < str.length(); ++i) {
+    	str[i] = toupper(str[i]);
+	}
+	return str;
+}
+
 int main (int argc, char **argv) {
 	int create_socket;    // Integer for socket creation and it's error handling
 	char buffer[BUF], input[BUF]; // Character Arrays, buffer is the final datastream that gets send to the server, input is used for input, concatenation and copies
@@ -75,9 +82,10 @@ int main (int argc, char **argv) {
 			cout << "------------------------------------" << endl;
 			cout << endl;
 			cout << "Enter your command: "<< endl;
-			//fgets (str, BUF, stdin);
-			getline(cin, input_str);
 
+			getline(cin, input_str);	// get input from user
+			input_str = uppercase(input_str);	// parse input to uppercase
+			
 			if(input_str == "LOGIN"){
 				input_str += "\n"; // add newline
 				strncpy(buffer,input_str.c_str(),BUF);
