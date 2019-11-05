@@ -12,9 +12,11 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
-
+#include <map>
 #include <pthread.h>
 #include <ldap.h>
+
+using namespace std;
 
 #define LDAP_URI "ldap://ldap.technikum-wien.at:389"
 #define SEARCHBASE "dc=technikum-wien,dc=at"
@@ -27,8 +29,7 @@
 int THREAD_NUM = 0; // global thread counter
 char *path_global;
 
-// pthread_join();
-using namespace std;
+multimap<string,string> logMap;
 
 struct thread_data {
 	int socket_int;
@@ -151,7 +152,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 						cmp_uid = ldap_get_dn(ld,e);
 
 						// DN string is being cut into pieces -> "if18b***"
-						cmp_uid = cmp_uid.substr(4,8);
+						cmp_uid = cmp_uid.substr(4,12);
 
 						//compares entered UID to IDs in the database
 						if(strncmp(input_uid.c_str(), cmp_uid.c_str(), 8)==0){
@@ -421,7 +422,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 				perror("recv error");
 				return 0; // former EXIT_FAILURE
 			}
-		} while (strncmp (buffer, "quit", 4)  != 0);
+		} while (strncmp (buffer, "QUIT", 4)  != 0);
 		close(new_socket);
 		pthread_exit(NULL);
 }

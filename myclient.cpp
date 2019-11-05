@@ -74,7 +74,7 @@ int main (int argc, char **argv) {
 
 	// input after successful connection
 	do{
-		while(input_str != "quit"){
+		while(input_str != "QUIT"){
 			overload = false;  // set overload to false initially for any case of unexpected operation cancelling
 			cout << endl;
 			cout << "------------------------------------" << endl;
@@ -358,7 +358,7 @@ int main (int argc, char **argv) {
 			}
 			// catch empty commands
 			else if(input_str == ""){} 
-			else if(input_str == "quit"){
+			else if(input_str == "QUIT"){
 				input_str += "\n";
 				strncpy(buffer,input_str.c_str(),BUF);
 				break;
@@ -369,7 +369,7 @@ int main (int argc, char **argv) {
 			}
 		}
 	}
-	while (strcmp (buffer, "quit\n") != 0);
+	while (strcmp (buffer, "QUIT\n") != 0);
 	close (create_socket);
 	return EXIT_SUCCESS;
 }
