@@ -141,14 +141,11 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					//iterates ldap entries until next entry is NULL (last entry)
 					for(e = ldap_first_entry(ld, result); e != NULL; e = ldap_next_entry(ld,e)){
 
-						// long DN sausage
+						// long DN string
 						cmp_uid = ldap_get_dn(ld,e);
 
-						// DN sausage is being cut into pieces -> "if18b***"
+						// DN string is being cut into pieces -> "if18b***"
 						cmp_uid = cmp_uid.substr(4,8);
-
-						// cout << "database uid" << cmp_uid << endl;		//debug
-						// cout << "input uid" << input_uid << endl;		//debug
 
 						//compares entered UID to IDs in the database
 						if(strncmp(input_uid.c_str(), cmp_uid.c_str(), 8)==0){
@@ -157,10 +154,6 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							dn_uid = ldap_get_dn(ld,e); //full user id sausage
 
 							cout << dn_uid << endl;
-
-							strncpy (buffer,"OK\n", BUF);
-							send(new_socket, buffer, strlen(buffer),0);
-							clear_buffer(buffer);
 
 							// unbind anonymous user
 							// bind user with transfered credentials
@@ -181,6 +174,10 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							}
 							else{
 								printf("bind successful, user logged in\n");
+								strncpy (buffer,"OK\n", BUF);
+								send(new_socket, buffer, strlen(buffer),0);
+								clear_buffer(buffer);
+
 							}
 
 							user_found = true;
