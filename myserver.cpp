@@ -97,7 +97,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					/* setup LDAP connection */
 					if (ldap_initialize(&ld,LDAP_URI) != LDAP_SUCCESS){
 						fprintf(stderr,"ldap_init failed");
-						return 0; // former EXIT_FAILURE
+						break; //return 0; // former EXIT_FAILURE
 					}
 
 					printf("connected to LDAP server %s\n",LDAP_URI);
@@ -105,13 +105,13 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					if ((rc = ldap_set_option(ld, LDAP_OPT_PROTOCOL_VERSION, &ldapversion)) != LDAP_SUCCESS){
 						fprintf(stderr, "ldap_set_option(PROTOCOL_VERSION): %s\n", ldap_err2string(rc));
 						ldap_unbind_ext_s(ld, NULL, NULL);
-						return 0; // former EXIT_FAILURE
+						break; //return 0; // former EXIT_FAILURE
 					}
 
 					if ((rc = ldap_start_tls_s(ld, NULL, NULL)) != LDAP_SUCCESS){
 						fprintf(stderr, "ldap_start_tls_s(): %s\n", ldap_err2string(rc));
 						ldap_unbind_ext_s(ld, NULL, NULL);
-						return 0; // former EXIT_FAILURE
+						break; //return 0; // former EXIT_FAILURE
 					}
 
 					/* anonymous bind */
@@ -120,10 +120,10 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					if (rc != LDAP_SUCCESS){
 						fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
 						ldap_unbind_ext_s(ld, NULL, NULL);
-						return 0; // former EXIT_FAILURE
+						break; //return 0; // former EXIT_FAILURE
 					}
 					else{
-						printf("bind successful\n");
+						printf("Anonymous bind successful\n");
 					}
 
 					/* perform ldap search */
@@ -132,7 +132,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					if (rc != LDAP_SUCCESS){
 						fprintf(stderr,"LDAP search error: %s\n",ldap_err2string(rc));
 						ldap_unbind_ext_s(ld, NULL, NULL);
-						return 0; // former EXIT_FAILURE
+						break; //return 0; // former EXIT_FAILURE
 					}
 
 					printf("Total results: %d\n", ldap_count_entries(ld, result));
@@ -157,9 +157,9 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 						//compares entered UID to IDs in the database
 						if(strncmp(input_uid.c_str(), cmp_uid.c_str(), 8)==0){
 
-							cout << "bingo" << endl;	//username was found!
+							cout << "UID found" << endl;	//username was found!
 							dn_uid = ldap_get_dn(ld,e); //full user id sausage
-
+							user_found = true;
 							cout << dn_uid << endl;
 
 							// unbind anonymous user
@@ -176,8 +176,8 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 							if (rc != LDAP_SUCCESS){
 								fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
-								ldap_unbind_ext_s(ld, NULL, NULL);
-								return 0; // former EXIT_FAILURE
+								//ldap_unbind_ext_s(ld, NULL, NULL);
+								break; //return 0; // former EXIT_FAILURE
 							}
 							else{
 								printf("bind successful, user logged in\n");
@@ -188,7 +188,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							}
 
 							user_found = true;
-
+							cout << endl;
 							break;
 
 						}
