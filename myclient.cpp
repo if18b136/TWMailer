@@ -146,6 +146,30 @@ int main (int argc, char **argv) {
 					}
 				}
 			}
+			//else if(input_str == "MAP"){
+			//	input_str += "\n"; // add newline
+			//	strncpy(buffer,input_str.c_str(),BUF);
+			//	while(!overload){
+			//		cout << "UID: ";
+			// 		getline(cin,input_str);
+			// 		if(input_str.length() > 8){
+			// 			cout << "input exceeds char limit. (max. 8 characters)" << endl;
+			// 		}
+			// 		else if(input_str.length() == 0){
+			// 			cout << "empty input not allowed." << endl;
+			// 		}
+			// 		else{
+			// 			overload = true; // gets set to true to break out of loop
+			// 			input_str += "\n";
+			// 			strcat(buffer,input_str.c_str());
+			// 		}
+			// 	}
+
+			// 	overload = false; // reset overload for password
+
+			// 	send(create_socket, buffer, strlen (buffer), 0);
+			// 	clear_buffer(buffer);
+			// }
 
 			//Command: SEND
 			else if(input_str == "SEND"){

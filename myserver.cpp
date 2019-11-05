@@ -15,6 +15,7 @@
 #include <map>
 #include <pthread.h>
 #include <ldap.h>
+#include <algorithm>
 
 using namespace std;
 
@@ -72,6 +73,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 				token = strtok (buffer,"\n");
 				cout << "Command received: "<< token << endl;
 				username = strtok (NULL,"\n");
+				cout << username << endl;
 				filename = username + ".txt";
 				
 				//LOGIN command on server
@@ -176,8 +178,13 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 							if (rc != LDAP_SUCCESS){
 								fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
+								
+								printf("bind unsuccessful, wrong pw\n");
+								strncpy (buffer,"ERR\n", BUF);
+								send(new_socket, buffer, strlen(buffer),0);
+								clear_buffer(buffer);
 								//ldap_unbind_ext_s(ld, NULL, NULL);
-								break; //return 0; // former EXIT_FAILURE
+								//break; //return 0; // former EXIT_FAILURE
 							}
 							else{
 								printf("bind successful, user logged in\n");
@@ -187,7 +194,6 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 							}
 
-							user_found = true;
 							cout << endl;
 							break;
 
@@ -196,7 +202,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 					//checks if user was found or not
 					if(user_found == false){
-
+						logMap.insert(pair<string, string>(data_p->ip_addr,"false"));
 						cout << "user was not found!" << endl;
 						strncpy (buffer,"ERR\n", BUF);
 						send(new_socket, buffer, strlen(buffer),0);
@@ -212,6 +218,11 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 					
 				}
+				//else if(token == "MAP"){
+				//	cout << "Map check" << endl;
+				//	for(pair<string, string> elem : logMap)
+				//		cout<< elem.first <<" :: "<< elem.second << endl;
+				//}
 				// SEND command on server side
 				else if(token == "SEND"){
 					cout << "Message received from: " << username << endl;
