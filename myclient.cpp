@@ -195,11 +195,11 @@ int main (int argc, char **argv) {
 						logged_in = true;
 					}
 					else if(token == "ERR"){
-						cout << "198" << endl;
+
 						// let's check if we are already blocked
 						size=recv(create_socket,buffer,BUF-1, 0);
 						if (size > 0){
-							cout << "202" << endl;
+
 							buffer[size]= '\0';
 							string exit = strtok (buffer,"\n");
 							if (exit == "3"){
@@ -209,7 +209,7 @@ int main (int argc, char **argv) {
 							}
 						}
 						else{
-							cout << "212" << endl;
+
 							close (create_socket);
 							return EXIT_SUCCESS;
 						}

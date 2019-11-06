@@ -71,7 +71,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 		// - cout << "Time check on first: " << timeCheckL << endl;
 		if(elem.first == data_p->ip_addr){
 			if(timeCheckL < elem.second){
-				cout << "74 :: IP address " << data_p->ip_addr << " is blocked." << endl;
+				cout << "IP address " << data_p->ip_addr << " is blocked." << endl;
 				strcpy(buffer,"IP is blocked.\n");	// welcome message
 				send(new_socket, buffer, strlen(buffer),0);
 				clear_buffer(buffer);
@@ -128,9 +128,9 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 				time_t timeCheck = time(nullptr);
 				long int timeCheckL = static_cast<long int>(timeCheck);
 				if(elem.first == data_p->ip_addr){
-					cout << "131 :: IP address is in block list" << endl;
+					cout << "IP address is in block list" << endl;
 					if(timeCheckL < elem.second){
-						cout << "133 :: IP address " << data_p->ip_addr << " is blocked." << endl;
+						cout << "IP address " << data_p->ip_addr << " is blocked." << endl;
 
 						THREAD_NUM--;
 						close(new_socket);
@@ -138,7 +138,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 						break;
 					}
 					else{
-						cout << " 141 :: Block was lifted." << endl;
+						cout << "Block was lifted." << endl;
 						blockMap.erase(data_p->ip_addr);
 					}
 				}
@@ -160,9 +160,9 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					time_t timeCheck = time(nullptr);
 					long int timeCheckL = static_cast<long int>(timeCheck);
 					if(elem.first == data_p->ip_addr){
-						cout << "163 :: IP address in blockMap found" << endl;
+						cout << "IP address in blockMap found" << endl;
 						if(timeCheckL < elem.second){
-							cout << "165 :: IP address " << data_p->ip_addr << " is blocked." << endl;
+							cout << "IP address " << data_p->ip_addr << " is blocked." << endl;
 							
 							THREAD_NUM--;
 							close(new_socket);
@@ -170,7 +170,7 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							break;
 						}
 						else{
-							cout << "173 :: Block was lifted" << endl;
+							cout << "Block was lifted" << endl;
 							blockMap.erase(data_p->ip_addr);
 						}
 					}
@@ -179,22 +179,22 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 				for(pair<string, string> elem : logMap){
 					if(elem.first == data_p->ip_addr && elem.second == "false"){
 						block_cnt++;
-						cout << "181 :: Log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
+						cout << "Log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
 					}
 				}
 				if(block_cnt >= 3){
 					// delete previous 3 inserts of ip
 					logMap.erase(data_p->ip_addr);
-					cout << "187 :: logMap entries deleted." << endl;
+					cout << "logMap entries deleted." << endl;
 					
 					// create ip-block in blockMap
 					time_t seconds = time(nullptr);
 					long int time = static_cast<long int>(seconds);
 					time += 600;
-					cout << "193 :: Timeout: " << time << endl;
+					cout << "Timeout: " << time << endl;
 					blockMap.insert(pair<string, long int>(data_p->ip_addr,time));
 
-					cout << "196 :: client IP is blocked now." << data_p->ip_addr << endl;
+					cout << "client IP is blocked now." << data_p->ip_addr << endl;
 					
 					THREAD_NUM--;
 					//shutdown(new_socket);
@@ -308,24 +308,23 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 							// Here we should already check if the user has made 3 failed attempts to login
 							block_cnt = 0;
-							cout << "313 :: " << block_cnt << endl;
 							for(pair<string, string> elem : logMap){
 								if(elem.first == data_p->ip_addr && elem.second == "false"){
 									block_cnt++;
-									cout << "317 :: log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
+									cout << "Log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
 								}
 							}
 							if(block_cnt >= 3){
 								// delete previous 3 inserts of ip
 								logMap.erase(data_p->ip_addr);
-								cout << "320 :: logMap entries deleted." << endl;
+								cout << "logMap entries deleted." << endl;
 								
 								// create ip-block in blockMap
 								time_t seconds = time(nullptr);
 								long int time = static_cast<long int>(seconds);
 								time += TIMEOUT;
 								blockMap.insert(pair<string, long int>(data_p->ip_addr,time));
-								cout << "330 :: client IP is blocked now." << data_p->ip_addr << endl;
+								cout << "client IP is blocked now." << data_p->ip_addr << endl;
 								
 								strncpy (buffer,"3\n", BUF);
 								send(new_socket, buffer, strlen(buffer),0);
@@ -362,24 +361,24 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 
 					// Here we should already check if the user has made 3 failed attempts to login
 					block_cnt = 0;
-					cout << "358 :: " << block_cnt << endl;
+
 					for(pair<string, string> elem : logMap){
 						if(elem.first == data_p->ip_addr && elem.second == "false"){
 							block_cnt++;
-							cout << "362 :: log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
+							cout << "Log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
 						}
 					}
 					if(block_cnt == 3){
 						// delete previous 3 inserts of ip
 						logMap.erase(data_p->ip_addr);
-						cout << "368 :: logMap entries deleted." << endl;
+						cout << "logMap entries deleted." << endl;
 						
 						// create ip-block in blockMap
 						time_t seconds = time(nullptr);
 						long int time = static_cast<long int>(seconds);
 						time += TIMEOUT;
 						blockMap.insert(pair<string, long int>(data_p->ip_addr,time));
-						cout << "375 :: client IP is blocked now." << data_p->ip_addr << endl;
+						cout << "client IP is blocked now." << data_p->ip_addr << endl;
 						
 						strncpy (buffer,"3\n", BUF);
 						send(new_socket, buffer, strlen(buffer),0);
@@ -569,24 +568,6 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 					remove(path_file.c_str());
 					rename(filename_temp.c_str(),path_file.c_str());
 					outfile_temp.close();
-
-					/*
-
-					 Now we need to rephrase the msg numbers - Not done
-					outfile.open(path_file,ios_base::app);
-					ifstream file_d(path_file);
-					int del_num = 1;
-
-					// Check if the first message has been deleted.
-					getline(file_d,line);
-					if(line != "1"){
-
-					}
-					while(getline(file_d,line)){
-					
-					}
-
-					*/
 
 					if(!del_msg){
 						strncpy (buffer,"ERR\n", BUF);
