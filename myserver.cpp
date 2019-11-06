@@ -16,6 +16,7 @@
 #include <pthread.h>
 #include <ldap.h>
 #include <algorithm>
+#include <ctime>
 
 using namespace std;
 
@@ -25,12 +26,13 @@ using namespace std;
 #define FILTER "(uid=if18b*)"
 #define BIND_USER ""	/* anonymous bind with user and pw empty */
 #define BIND_PW ""
-
+//#define TIMEOUT 60
 #define BUF 1024
 int THREAD_NUM = 0; // global thread counter
 char *path_global;
 
 multimap<string,string> logMap;
+multimap<string,long int> blockMap;
 
 struct thread_data {
 	int socket_int;
@@ -43,21 +45,17 @@ void clear_buffer(char *buffer){
 	fill(begin,end,0);
 }
 
-string lowercase(string str){
-	for(unsigned int i = 0; i < str.length(); ++i) {
-    	str[i] = tolower(str[i]);
-	}
-	return str;
-}
-
 void *test_thread(void *arg) { //needs the socket connection parameters as argunments
 
 	struct thread_data *data_p;
 	data_p = (struct thread_data *) arg;
 
-	int size, *socket_p, new_socket;
+	int size, *socket_p, new_socket, ip_cnt;
 	char buffer[BUF];
 	string path = path_global;
+
+	// bad bool for sending welcome msg only once
+	bool hello = false;
 
 	//socket_p = reinterpret_cast<int*>(arg);
 	new_socket = data_p->socket_int;
@@ -65,19 +63,144 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 	// cout << "IP Address: " << data_p->ip_addr << endl;
 	cout << "Thread number: " << THREAD_NUM << endl;
 
+	for(pair<string, long int> elem : blockMap){
+		cout<< "blockMap entry: " << elem.first <<" :: "<< elem.second << endl;
+		time_t timeCheck = time(nullptr);
+		long int timeCheckL = static_cast<long int>(timeCheck);
+		cout << "Time check on first: " << timeCheckL << endl;
+		if(elem.first == data_p->ip_addr){
+			if(timeCheckL < elem.second){
+				cout << "IP address " << data_p->ip_addr << " is blocked." << endl;
+				strcpy(buffer,"ip blocked\n");	// welcome message
+				send(new_socket, buffer, strlen(buffer),0);
+				clear_buffer(buffer);
+				
+				THREAD_NUM--;
+				close(new_socket);
+				pthread_exit(NULL);
+				break;
+			}
+			else{
+				blockMap.erase(data_p->ip_addr);
+				if(!hello){
+					strcpy(buffer,"Welcome to myserver!\n");	// welcome message
+					send(new_socket, buffer, strlen(buffer),0);
+					clear_buffer(buffer);
+					hello = true;
+				}
+			}
+		}
+	}
+
+	if(!hello){
+		strcpy(buffer,"Welcome to myserver!\n");	// welcome message
+		send(new_socket, buffer, strlen(buffer),0);
+		clear_buffer(buffer);
+		hello = true;
+	}
+
+	for(pair<string, string> elem : logMap){
+		if(elem.first == data_p->ip_addr && elem.second == "false"){
+			ip_cnt++;
+		}
+		//elem.first 
+		//elem.second
+	}
+	if(ip_cnt == 3){
+		// delete previous 3 inserts of ip
+		logMap.erase(data_p->ip_addr);
+		
+		// create ip-block in blockMap
+		time_t seconds = time(nullptr);
+		long int time = static_cast<long int>(seconds);
+		time += 600;
+		blockMap.insert(pair<string, long int>(data_p->ip_addr,time));
+	}
+
 	do {
 			size = recv (new_socket, buffer, BUF-1, 0);
 			if( size > 0){
+
+				for(pair<string, long int> elem : blockMap){
+					cout<< "blockMap entry: " << elem.first <<" :: "<< elem.second << endl;
+					time_t timeCheck = time(nullptr);
+					long int timeCheckL = static_cast<long int>(timeCheck);
+					cout << "Time check: " << timeCheckL << endl;
+					if(elem.first == data_p->ip_addr){
+						cout << "IP address is in block list" << endl;
+						if(timeCheckL > elem.second){
+							cout << "12 IP address " << data_p->ip_addr << " is blocked." << endl;
+							close(new_socket);
+							pthread_exit(NULL);
+						}
+						else{
+							cout << "block was lifted 1234 " << endl;
+							blockMap.erase(data_p->ip_addr);
+						}
+					}
+				}
+
 				buffer[size] = '\0';
 				string input_str, num_str, token, username, filename, command, line;  //various strings for input/output handling
 				token = strtok (buffer,"\n");
 				cout << "Command received: "<< token << endl;
 				username = strtok (NULL,"\n");
-				cout << username << endl;
+				// cout << "Sent UID: "  << username << endl;
 				filename = username + ".txt";
+
+				int block_cnt = 0;
 				
 				//LOGIN command on server
 				if(token == "LOGIN"){
+					cout << "logMap: " << endl;
+					for(pair<string, string> elem : logMap)
+						cout<< elem.first <<" :: "<< elem.second << endl;
+
+					// cout << "blockMap: " << endl;
+					// for(pair<string, long int> elem : blockMap)
+					// 	cout << elem.first <<" :: "<< elem.second << endl;
+
+					for(pair<string, long int> elem : blockMap){
+						cout<< "blockMap entry: " << elem.first <<" :: "<< elem.second << endl;
+						time_t timeCheck = time(nullptr);
+						long int timeCheckL = static_cast<long int>(timeCheck);
+						cout << "timeCheck long int: " << timeCheckL << endl;
+						if(elem.first == data_p->ip_addr){
+							cout << "IP address in blockMap found" << endl;
+							if(timeCheckL > elem.second){
+								cout << "IP address " << data_p->ip_addr << " is blocked." << endl;
+								close(new_socket);
+								pthread_exit(NULL);
+							}
+							else{
+								cout << "block was lifted" << endl;
+								blockMap.erase(data_p->ip_addr);
+							}
+						}
+					}
+					for(pair<string, string> elem : logMap){
+						if(elem.first == data_p->ip_addr && elem.second == "false"){
+							block_cnt++;
+							cout << "log Entry for IP address " << data_p->ip_addr << " found. Num:" << block_cnt << endl;
+						}
+					}
+					if(block_cnt == 3){
+						// delete previous 3 inserts of ip
+						logMap.erase(data_p->ip_addr);
+						cout << "logMap entries deleted." << endl;
+						
+						// create ip-block in blockMap
+						time_t seconds = time(nullptr);
+						long int time = static_cast<long int>(seconds);
+						time += 600;
+						cout << "Timeout: " << time << endl;
+						blockMap.insert(pair<string, long int>(data_p->ip_addr,time));
+
+						cout << "client IP is blocked now." << data_p->ip_addr << endl;
+						close(new_socket);
+						pthread_exit(NULL);
+					}
+
 					string password = strtok(NULL,"\n");
 
 					LDAP *ld;			/* LDAP resource handle */
@@ -164,12 +287,8 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							user_found = true;
 							cout << dn_uid << endl;
 
-							// unbind anonymous user
-							// bind user with transfered credentials
-							
 
-							//ldap_unbind_ext_s(ld, NULL, NULL);
-						
+							// bind user with transfered credentials
 
 							cred.bv_val = (char *)password.c_str();
 							cred.bv_len = strlen(password.c_str());
@@ -177,8 +296,8 @@ void *test_thread(void *arg) { //needs the socket connection parameters as argun
 							rc = ldap_sasl_bind_s(ld,dn_uid.c_str(),LDAP_SASL_SIMPLE,&cred,NULL,NULL,&servercredp);
 
 							if (rc != LDAP_SUCCESS){
-								fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
-								
+								//fprintf(stderr,"LDAP bind error: %s\n",ldap_err2string(rc));
+								logMap.insert(pair<string, string>(data_p->ip_addr,"false"));
 								printf("bind unsuccessful, wrong pw\n");
 								strncpy (buffer,"ERR\n", BUF);
 								send(new_socket, buffer, strlen(buffer),0);
@@ -447,6 +566,9 @@ int main (int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	blockMap.insert(pair<string, long int>("first",0));
+	logMap.insert(pair<string, string>("first","0"));
+
 	int create_socket, new_socket, status;
 	socklen_t addrlen;
 	char buffer[BUF];
@@ -493,10 +615,15 @@ int main (int argc, char **argv) {
 			td.socket_int = new_socket;
 			td.ip_addr = inet_ntoa (cliaddress.sin_addr);
 
-			strcpy(buffer,"Welcome to myserver!\n");	// welcome message
-			send(new_socket, buffer, strlen(buffer),0);
-			clear_buffer(buffer);
+			for(pair<string, string> elem : logMap){
+				if(elem.first == td.ip_addr && elem.second != "false"){
+					// compare strings to each other;
+				}
+				//elem.first 
+				//elem.second
+			}
 
+			// took away welcome msg to adapt it in case of blocked ip address
 
 			status = pthread_create(&thread, NULL, test_thread, (void *) &td); // after client connects successfully, we need to open a thread for the client
 			THREAD_NUM++;

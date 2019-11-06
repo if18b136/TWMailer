@@ -112,7 +112,15 @@ int main (int argc, char **argv) {
 		size=recv(create_socket,buffer,BUF-1, 0);
 		if (size>0){
 			buffer[size]= '\0';
+
 			cout << buffer << endl;
+			// end connection here early if user gets blocked
+			//string token = strtok (buffer,"\0");
+			cout << "buff: "<< buffer[0] << endl;
+			if(buffer[0] == 'i'){
+				close (create_socket);
+				return EXIT_SUCCESS;
+			}
 			clear_buffer(buffer);
 		}
 	}
