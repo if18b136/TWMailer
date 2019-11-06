@@ -108,13 +108,21 @@ int main (int argc, char **argv) {
 
 	// connection try, success and error messages
 	if (connect ( create_socket, (struct sockaddr *) &address, sizeof (address)) == 0){
-		printf ("Connection with server (%s) established\n", inet_ntoa (address.sin_addr));
 		size=recv(create_socket,buffer,BUF-1, 0);
 		if (size>0){
 			buffer[size]= '\0';
+
 			cout << buffer << endl;
+			// end connection here early if user gets blocked
+
+			//cout << "buff: "<< buffer[0] << endl;
+			if(buffer[0] == 'I'){
+				close (create_socket);
+				return EXIT_SUCCESS;
+			}
 			clear_buffer(buffer);
 		}
+		printf ("Connection with server (%s) established\n", inet_ntoa (address.sin_addr));
 	}
 	else{
 		perror("Connect error - no server available");
@@ -187,37 +195,30 @@ int main (int argc, char **argv) {
 						logged_in = true;
 					}
 					else if(token == "ERR"){
-						// do nothing - you will have to reenter your credentials
+						cout << "198" << endl;
+						// let's check if we are already blocked
+						size=recv(create_socket,buffer,BUF-1, 0);
+						if (size > 0){
+							cout << "202" << endl;
+							buffer[size]= '\0';
+							string exit = strtok (buffer,"\n");
+							if (exit == "3"){
+								cout << "You failed 3 times to log in - blocked for 2 Minutes." << endl;
+								close (create_socket);
+								return EXIT_SUCCESS;
+							}
+						}
+						else{
+							cout << "212" << endl;
+							close (create_socket);
+							return EXIT_SUCCESS;
+						}
 					}
 					else{
 						// should not occur but cathing it removes unwanted behaviour
 					}
 				}
 			}
-			//else if(input_str == "MAP"){
-			//	input_str += "\n"; // add newline
-			//	strncpy(buffer,input_str.c_str(),BUF);
-			//	while(!overload){
-			//		cout << "UID: ";
-			// 		getline(cin,input_str);
-			// 		if(input_str.length() > 8){
-			// 			cout << "input exceeds char limit. (max. 8 characters)" << endl;
-			// 		}
-			// 		else if(input_str.length() == 0){
-			// 			cout << "empty input not allowed." << endl;
-			// 		}
-			// 		else{
-			// 			overload = true; // gets set to true to break out of loop
-			// 			input_str += "\n";
-			// 			strcat(buffer,input_str.c_str());
-			// 		}
-			// 	}
-
-			// 	overload = false; // reset overload for password
-
-			// 	send(create_socket, buffer, strlen (buffer), 0);
-			// 	clear_buffer(buffer);
-			// }
 
 			//Command: SEND
 			else if(input_str == "SEND"){
